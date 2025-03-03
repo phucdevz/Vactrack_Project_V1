@@ -1,0 +1,380 @@
+/* calendar.css - CSS cho lịch và đặt lịch hẹn */
+
+.calendar-container {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.75rem 1.5rem rgba(18, 38, 63, 0.03);
+    overflow: hidden;
+}
+
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.calendar-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.calendar-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.calendar-nav-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+    border-radius: 50%;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-color);
+}
+
+.calendar-nav-btn:hover {
+    background-color: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+}
+
+.calendar-view-selector {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+.calendar-view-btn {
+    padding: 0.5rem 1rem;
+    background-color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.calendar-view-btn.active {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+.calendar-body {
+    padding: 1.5rem;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+}
+
+.calendar-weekday {
+    text-align: center;
+    font-weight: 600;
+    color: var(--secondary-color);
+    padding: 0.5rem;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.calendar-day:hover {
+    background-color: #f8f9fa;
+    border-color: var(--primary-color);
+}
+
+.calendar-day.today {
+    background-color: rgba(44, 123, 229, 0.1);
+    border-color: var(--primary-color);
+}
+
+.calendar-day.selected {
+    background-color: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+}
+
+.calendar-day.other-month {
+    opacity: 0.5;
+}
+
+.calendar-day-number {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.calendar-day-events {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.calendar-event {
+    font-size: 0.75rem;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.calendar-event.primary {
+    background-color: rgba(44, 123, 229, 0.1);
+    color: var(--primary-color);
+}
+
+.calendar-event.success {
+    background-color: rgba(0, 217, 126, 0.1);
+    color: var(--success-color);
+}
+
+.calendar-event.warning {
+    background-color: rgba(246, 195, 67, 0.1);
+    color: var(--warning-color);
+}
+
+.calendar-event.danger {
+    background-color: rgba(230, 55, 87, 0.1);
+    color: var(--danger-color);
+}
+
+.calendar-event.info {
+    background-color: rgba(57, 175, 209, 0.1);
+    color: var(--info-color);
+}
+
+.calendar-event-more {
+    font-size: 0.75rem;
+    color: var(--secondary-color);
+    text-align: center;
+}
+
+.calendar-time-slots {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+}
+
+.calendar-time-labels {
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-time-label {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: var(--secondary-color);
+    border-right: 1px solid var(--border-color);
+}
+
+.calendar-time-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-time-column {
+    border-right: 1px solid var(--border-color);
+}
+
+.calendar-time-column:last-child {
+    border-right: none;
+}
+
+.calendar-time-slot {
+    height: 60px;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.25rem;
+    position: relative;
+}
+
+.calendar-time-event {
+    position: absolute;
+    left: 0;
+    right: 0;
+    background-color: rgba(44, 123, 229, 0.1);
+    color: var(--primary-color);
+    border-left: 3px solid var(--primary-color);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.calendar-time-event:hover {
+    background-color: rgba(44, 123, 229, 0.2);
+}
+
+/* Appointment Booking */
+.appointment-form {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.75rem 1.5rem rgba(18, 38, 63, 0.03);
+    padding: 1.5rem;
+}
+
+.appointment-form-header {
+    margin-bottom: 1.5rem;
+}
+
+.appointment-form-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.appointment-form-subtitle {
+    color: var(--secondary-color);
+}
+
+.appointment-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.appointment-form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.appointment-date-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.appointment-date-option {
+    flex: 1;
+    min-width: 120px;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.appointment-date-option:hover {
+    background-color: #f8f9fa;
+    border-color: var(--primary-color);
+}
+
+.appointment-date-option.selected {
+    background-color: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+}
+
+.appointment-date-option-day {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.appointment-date-option-date {
+    font-size: 0.875rem;
+}
+
+.appointment-time-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.appointment-time-option {
+    flex: 1;
+    min-width: 100px;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.appointment-time-option:hover {
+    background-color: #f8f9fa;
+    border-color: var(--primary-color);
+}
+
+.appointment-time-option.selected {
+    background-color: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+}
+
+.appointment-time-option.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #f8f9fa;
+}
+
+.appointment-summary {
+    background-color: #f8f9fa;
+    border-radius: 0.375rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.appointment-summary-title {
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.appointment-summary-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.appointment-summary-label {
+    color: var(--secondary-color);
+}
+
+.appointment-summary-value {
+    font-weight: 500;
+}
+
+.appointment-summary-total {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.appointment-summary-total-label {
+    font-weight: 600;
+}
+
+.appointment-summary-total-value {
+    font-weight: 600;
+    color: var(--primary-color);
+}

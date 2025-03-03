@@ -1,0 +1,399 @@
+/* style.css - CSS chính cho toàn bộ ứng dụng */
+
+/* === BIẾN MÀU SẮC VÀ FONT CHỮ === */
+:root {
+    --primary-color: #2c7be5;
+    --primary-dark: #1a68d1;
+    --secondary-color: #6c757d;
+    --success-color: #00d97e;
+    --info-color: #39afd1;
+    --warning-color: #f6c343;
+    --danger-color: #e63757;
+    --light-color: #f9fbfd;
+    --dark-color: #12263f;
+
+    --body-bg: #f9fbfd;
+    --body-color: #12263f;
+    --border-color: #e3ebf6;
+    --card-border: 1px solid var(--border-color);
+    --card-shadow: 0 0.75rem 1.5rem rgba(18, 38, 63, 0.03);
+
+    --font-family-sans-serif: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-family-heading: "Montserrat", "Helvetica Neue", Arial, sans-serif;
+}
+
+/* === RESET VÀ THIẾT LẬP CƠ BẢN === */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-family-sans-serif);
+    background-color: var(--body-bg);
+    color: var(--body-color);
+    line-height: 1.6;
+    font-size: 1rem;
+    overflow-x: hidden;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.2s ease-in-out;
+}
+
+a:hover {
+    color: var(--primary-dark);
+    text-decoration: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-family-heading);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+/* === CONTAINER VÀ LAYOUT === */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+.main-content {
+    min-height: calc(100vh - 180px); /* 180px = header + footer */
+    padding: 2rem 0;
+}
+
+/* === HEADER === */
+.navbar {
+    box-shadow: 0 0.125rem 0.25rem rgba(18, 38, 63, 0.075);
+    background-color: #fff;
+    padding: 0.75rem 1rem;
+}
+
+.navbar-brand {
+    font-family: var(--font-family-heading);
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--primary-color) !important;
+}
+
+.navbar-nav .nav-link {
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    color: var(--secondary-color);
+    transition: color 0.2s ease-in-out;
+}
+
+.navbar-nav .nav-link:hover {
+    color: var(--primary-color);
+}
+
+.navbar-nav .nav-link.active {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* === CARD DESIGN === */
+.card {
+    border: var(--card-border);
+    border-radius: 0.5rem;
+    box-shadow: var(--card-shadow);
+    background-color: #fff;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 1.5rem;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 1rem 2rem rgba(18, 38, 63, 0.05);
+}
+
+.card-header {
+    background-color: rgba(247, 250, 252, 0.5);
+    border-bottom: var(--card-border);
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-footer {
+    background-color: rgba(247, 250, 252, 0.5);
+    border-top: var(--card-border);
+    padding: 1rem 1.5rem;
+}
+
+/* === BUTTONS === */
+.btn {
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.btn-info {
+    background-color: var(--info-color);
+    border-color: var(--info-color);
+}
+
+.btn-warning {
+    background-color: var(--warning-color);
+    border-color: var(--warning-color);
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    border-color: var(--danger-color);
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+    color: #fff;
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon i {
+    margin-right: 0.5rem;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.125rem;
+}
+
+/* === FORMS === */
+.form-control {
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(44, 123, 229, 0.25);
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-text {
+    color: var(--secondary-color);
+    font-size: 0.875rem;
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* === TABLES === */
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    color: var(--body-color);
+    vertical-align: middle;
+    border-color: var(--border-color);
+}
+
+.table th {
+    font-weight: 600;
+    padding: 0.75rem;
+    border-bottom: 2px solid var(--border-color);
+    background-color: rgba(247, 250, 252, 0.5);
+}
+
+.table td {
+    padding: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(247, 250, 252, 0.7);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(247, 250, 252, 0.3);
+}
+
+/* === BADGES === */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+    border-radius: 0.375rem;
+}
+
+/* === ALERTS === */
+.alert {
+    border: 0;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.alert-primary {
+    background-color: rgba(44, 123, 229, 0.1);
+    color: var(--primary-color);
+}
+
+.alert-success {
+    background-color: rgba(0, 217, 126, 0.1);
+    color: var(--success-color);
+}
+
+.alert-info {
+    background-color: rgba(57, 175, 209, 0.1);
+    color: var(--info-color);
+}
+
+.alert-warning {
+    background-color: rgba(246, 195, 67, 0.1);
+    color: var(--warning-color);
+}
+
+.alert-danger {
+    background-color: rgba(230, 55, 87, 0.1);
+    color: var(--danger-color);
+}
+
+/* === FOOTER === */
+.footer {
+    background-color: #fff;
+    border-top: 1px solid var(--border-color);
+    padding: 2rem 0;
+    margin-top: 2rem;
+}
+
+.footer h5 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.footer-links {
+    list-style: none;
+    padding-left: 0;
+}
+
+.footer-links li {
+    margin-bottom: 0.5rem;
+}
+
+.footer-links a {
+    color: var(--secondary-color);
+    transition: color 0.2s ease-in-out;
+}
+
+.footer-links a:hover {
+    color: var(--primary-color);
+}
+
+.footer-bottom {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--secondary-color);
+}
+
+/* === UTILITIES === */
+.section-title {
+    position: relative;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    text-align: center;
+}
+
+.section-title:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 3px;
+    background-color: var(--primary-color);
+}
+
+.text-primary { color: var(--primary-color) !important; }
+.text-success { color: var(--success-color) !important; }
+.text-info { color: var(--info-color) !important; }
+.text-warning { color: var(--warning-color) !important; }
+.text-danger { color: var(--danger-color) !important; }
+
+.bg-primary { background-color: var(--primary-color) !important; }
+.bg-success { background-color: var(--success-color) !important; }
+.bg-info { background-color: var(--info-color) !important; }
+.bg-warning { background-color: var(--warning-color) !important; }
+.bg-danger { background-color: var(--danger-color) !important; }
+.bg-light { background-color: var(--light-color) !important; }
+.bg-dark { background-color: var(--dark-color) !important; }
+
+/* === ANIMATIONS === */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.slide-in-up {
+    animation: slideInUp 0.5s ease-in-out;
+}

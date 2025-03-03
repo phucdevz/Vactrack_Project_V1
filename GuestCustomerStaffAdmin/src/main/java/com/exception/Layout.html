@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} ?: 'Hệ thống quản lý tiêm chủng'">Hệ thống quản lý tiêm chủng</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/bootstrap-custom.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/auth.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <link rel="stylesheet" th:href="@{/css/calendar.css}">
+    <link rel="stylesheet" th:href="@{/css/responsive.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" th:href="@{/}">Trung tâm Tiêm chủng</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/}">Trang chủ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/about}">Giới thiệu</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/services}">Dịch vụ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/prices}">Bảng giá</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/guide}">Cẩm nang</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/contact}">Liên hệ</a>
+                    </li>
+                </ul>
+
+                <!-- Khi chưa đăng nhập -->
+                <div class="d-flex" sec:authorize="!isAuthenticated()">
+                    <a th:href="@{/auth/login}" class="btn btn-light me-2">Đăng nhập</a>
+                    <a th:href="@{/auth/register}" class="btn btn-outline-light">Đăng ký</a>
+                </div>
+
+                <!-- Khi đã đăng nhập -->
+                <div class="dropdown" sec:authorize="isAuthenticated()">
+                    <a class="btn btn-light dropdown-toggle" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user me-1"></i> <span sec:authentication="name">Username</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <!-- Menu cho khách hàng -->
+                        <li sec:authorize="hasRole('CUSTOMER')">
+                            <a class="dropdown-item" th:href="@{/user/dashboard}">
+                                <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                            </a>
+                        </li>
+                        <li sec:authorize="hasRole('CUSTOMER')">
+                            <a class="dropdown-item" th:href="@{/children}">
+                                <i class="fas fa-child me-1"></i> Hồ sơ trẻ em
+                            </a>
+                        </li>
+                        <li sec:authorize="hasRole('CUSTOMER')">
+                            <a class="dropdown-item" th:href="@{/appointments}">
+                                <i class="fas fa-calendar-check me-1"></i> Lịch hẹn
+                            </a>
+                        </li>
+
+                        <!-- Menu cho nhân viên -->
+                        <li sec:authorize="hasRole('STAFF')">
+                            <a class="dropdown-item" th:href="@{/staff/dashboard}">
+                                <i class="fas fa-tachometer-alt me-1"></i> Dashboard nhân viên
+                            </a>
+                        </li>
+
+                        <!-- Menu cho admin -->
+                        <li sec:authorize="hasRole('ADMIN')">
+                            <a class="dropdown-item" th:href="@{/admin/dashboard}">
+                                <i class="fas fa-tachometer-alt me-1"></i> Dashboard admin
+                            </a>
+                        </li>
+
+                        <!-- Menu chung -->
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/user/profile}">
+                                <i class="fas fa-user-cog me-1"></i> Thông tin cá nhân
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/notifications}">
+                                <i class="fas fa-bell me-1"></i> Thông báo
+                                <span class="badge bg-danger rounded-pill" id="notificationCount">0</span>
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form th:action="@{/logout}" method="post">
+                                <button type="submit" class="dropdown-item">
+                                    <i class="fas fa-sign-out-alt me-1"></i> Đăng xuất
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<main class="container my-5">
+    <!-- Hiển thị thông báo -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-1"></i> <span th:text="${success}">Thành công</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${error}">Lỗi</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <!-- Nội dung trang -->
+    <div th:replace="${content}">
+        <!-- Nội dung sẽ được thay thế -->
+    </div>
+</main>
+
+<footer class="bg-dark text-white py-4 mt-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <h5>Trung tâm Tiêm chủng</h5>
+                <p>Địa chỉ: 123 Đường ABC, Quận XYZ, TP. HCM</p>
+                <p>Điện thoại: (028) 1234 5678</p>
+                <p>Email: info@tiemchung.com</p>
+            </div>
+            <div class="col-md-4">
+                <h5>Liên kết nhanh</h5>
+                <ul class="list-unstyled">
+                    <li><a th:href="@{/}" class="text-white">Trang chủ</a></li>
+                    <li><a th:href="@{/about}" class="text-white">Giới thiệu</a></li>
+                    <li><a th:href="@{/services}" class="text-white">Dịch vụ</a></li>
+                    <li><a th:href="@{/prices}" class="text-white">Bảng giá</a></li>
+                    <li><a th:href="@{/guide}" class="text-white">Cẩm nang</a></li>
+                    <li><a th:href="@{/contact}" class="text-white">Liên hệ</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5>Giờ làm việc</h5>
+                <p>Thứ Hai - Thứ Sáu: 8:00 - 17:00</p>
+                <p>Thứ Bảy: 8:00 - 12:00</p>
+                <p>Chủ Nhật: Nghỉ</p>
+            </div>
+        </div>
+        <div class="text-center mt-3">
+            <p>&copy; 2023 Trung tâm Tiêm chủng. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script th:src="@{/js/script.js}"></script>
+
+<!-- Script đếm số thông báo chưa đọc -->
+<script th:inline="javascript" sec:authorize="isAuthenticated()">
+    $(document).ready(function() {
+        // Lấy số lượng thông báo chưa đọc
+        $.get('/notifications/count-unread', function(data) {
+            if (data > 0) {
+                $('#notificationCount').text(data);
+            } else {
+                $('#notificationCount').hide();
+            }
+        });
+    });
+</script>
+</body>
+</html>

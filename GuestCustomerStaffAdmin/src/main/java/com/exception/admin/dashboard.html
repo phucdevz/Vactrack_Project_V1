@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Hệ thống quản lý tiêm chủng</title>
+</head>
+<body>
+<div th:replace="~{layout :: header}"></div>
+
+<div th:fragment="content">
+  <h2 class="mb-4">Admin Dashboard</h2>
+
+  <div class="row">
+    <div class="col-md-3">
+      <div class="list-group">
+        <a th:href="@{/admin/dashboard}" class="list-group-item list-group-item-action active">
+          <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+        </a>
+        <a th:href="@{/admin/users}" class="list-group-item list-group-item-action">
+          <i class="fas fa-users me-2"></i> Quản lý người dùng
+        </a>
+        <a th:href="@{/admin/vaccines}" class="list-group-item list-group-item-action">
+          <i class="fas fa-syringe me-2"></i> Quản lý vắc-xin
+        </a>
+        <a th:href="@{/admin/appointments}" class="list-group-item list-group-item-action">
+          <i class="fas fa-calendar-check me-2"></i> Quản lý lịch hẹn
+        </a>
+        <a th:href="@{/payments/admin/list}" class="list-group-item list-group-item-action">
+          <i class="fas fa-credit-card me-2"></i> Quản lý thanh toán
+        </a>
+        <a th:href="@{/admin/reports}" class="list-group-item list-group-item-action">
+          <i class="fas fa-chart-bar me-2"></i> Báo cáo & Thống kê

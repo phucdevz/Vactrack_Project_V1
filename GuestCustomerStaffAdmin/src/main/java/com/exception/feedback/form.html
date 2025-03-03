@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title><!DOCTYPE html>
+        <html xmlns:th="http://www.thymeleaf.org" lang="vi">
+        <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Đánh giá dịch vụ - Hệ thống quản lý tiêm chủng</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .rating {
+            display: inline-block;
+            direction: rtl;
+            unicode-bidi: bidi-override;
+        }
+        .rating input {
+            display: none;
+        }
+        .rating label {
+            display: inline-block;
+            padding: 0 0.1em;
+            color: #ddd;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+        .rating label:hover,
+        .rating label:hover ~ label,
+        .rating input:checked ~ label {
+            color: #ffc107;
+        }
+        .rating label:hover,
+        .rating label:hover ~ label {
+            color: #ffdb70;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{layout :: header}"></div>
+
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Đánh giá dịch vụ</h2>
+        <a th:href="@{/feedback/list}" class="btn btn-secondary">
+            <i class="fas fa-list me-1"></i> Xem đánh giá của tôi
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Gửi đánh giá của bạn</h5>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/feedback}" th:object="${feedback}" method="post" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label class="form-label">Đánh giá của bạn <span class="text-danger">*</span></label>
+                            <div class="rating">
+                                <input type="radio" id="star5" name="rating" value="5" th:field="*{rating}" required />
+                                <label for="star5" title="5 sao"><i class="fas fa-star"></i></label>
+                                <input type="radio" id="star4" name="rating" value="4" th:field="*{rating}" />
+                                <label for="star4" title="4 sao"><i class="fas fa-star"></i></label>
+                                <input type="radio" id="star3" name="rating" value="3" th:field="*{rating}" />
+                                <label for="star3" title="3 sao"><i class="fas fa-star"></i></label>
+                                <input type="radio" id="star2" name="rating" value="2" th:field="*{rating}" />
+                                <label for="star2" title="2 sao"><i class="fas fa-star"></i></label>
+                                <input type="radio" id="star1" name="rating" value="1" th:field="*{rating}" />
+                                <label for="star1" title="1 sao"><i class="fas fa-star"></i></label>
+                            </div>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('rating')}" th:errors="*{rating}">
+                                Vui lòng chọn đánh giá.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="type" class="form-label">Loại đánh giá <span class="text-danger">*</span></label>
+                            <select class="form-select" id="type" th:field="*{type}" required>
+                                <option value="">-- Chọn loại đánh giá --</option>
+                                <option th:each="feedbackType : ${T(main.java.com.model.Feedback.FeedbackType).values()}"
+                                        th:value="${feedbackType}"
+                                        th:text="${feedbackType == T(main.java.com.model.Feedback.FeedbackType).SERVICE ? 'Dịch vụ' : 
+                                                    (feedbackType == T(main.java.com.model.Feedback.FeedbackType).STAFF ? 'Nhân viên' : 
+                                                    (feedbackType == T(main.java.com.model.Feedback.FeedbackType).FACILITY ? 'Cơ sở vật chất' : 'Chung'))}">
+                                    Loại đánh giá
+                                </option>
+                            </select>
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('type')}" th:errors="*{type}">
+                                Vui lòng chọn loại đánh giá.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Nội dung đánh giá</label>
+                            <textarea class="form-control" id="comment" th:field="*{comment}" rows="5"
+                                      placeholder="Chia sẻ trải nghiệm của bạn về dịch vụ tiêm chủng..."></textarea>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="isPublic" th:field="*{public}" checked>
+                            <label class="form-check-label" for="isPublic">Hiển thị đánh giá này công khai</label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i> Gửi đánh giá
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Hướng dẫn đánh giá</h5>
+                </div>
+                <div class="card-body">
+                    <p>Đánh giá của bạn rất quan trọng đối với chúng tôi. Nó giúp chúng tôi cải thiện dịch vụ và mang đến trải nghiệm tốt hơn cho tất cả khách hàng.</p>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex align-items-center">
+                            <div class="text-warning me-2">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div>Rất không hài lòng</div>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <div class="text-warning me-2">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div>Không hài lòng</div>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <div class="text-warning me-2">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div>Bình thường</div>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <div class="text-warning me-2">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div>Hài lòng</div>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <div class="text-warning me-2">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div>Rất hài lòng</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Chính sách đánh giá</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Đánh giá phải dựa trên trải nghiệm thực tế.</li>
+                        <li>Nội dung đánh giá không được chứa ngôn từ xúc phạm, phân biệt đối xử.</li>
+                        <li>Không tiết lộ thông tin cá nhân của nhân viên hoặc khách hàng khác.</li>
+                        <li>Chúng tôi có quyền xóa các đánh giá vi phạm chính sách.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{layout :: footer}"></div>
+</body>
+</html>
+</title>
+</head>
+<body>
+
+</body>
+</html>

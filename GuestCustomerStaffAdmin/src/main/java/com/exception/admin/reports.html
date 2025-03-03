@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo cáo & Thống kê - Hệ thống quản lý tiêm chủng</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
+    <style>
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+        .stats-card {
+            transition: all 0.3s;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .stats-icon {
+            font-size: 3rem;
+            opacity: 0.8;
+        }
+        .report-section {
+            margin-bottom: 30px;
+        }
+        .filter-form {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table th {
+            background-color: #f1f1f1;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        .data-table tr:hover {
+            background-color: #f8f8f8;
+        }
+        .summary-box {
+            background-color: #f8f9fa;
+            border-left: 4px solid #0d6efd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .tab-pane {
+            padding: 20px 0;
+        }
+        .export-btn {
+            margin-left: 10px;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .chart-container {
+                page-break-inside: avoid;
+            }
+            .container {
+                width: 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{layout :: header}" class="no-print"></div>
+
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <h2>Báo cáo & Thống kê</h2>
+        <div>
+            <button id="printReportBtn" class="btn btn-outline-secondary">
+                <i class="fas fa-print"></i> In báo cáo
+            </button>
+                <html xmlns:th="http://www.thymeleaf.org" lang="vi">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Báo cáo & Thống kê - Hệ thống quản lý tiêm chủng</title>
+                </head>
+                <body>
+                <div th:replace="~{layout :: header}"></div>
+
+                <div th:fragment="content">
+                    <h2 class="mb-4">Báo cáo & Thống kê</h2>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="list-group">
+                                <a th:href="@{/admin/dashboard}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                                </a>
+                                <a th:href="@{/admin/users}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-users me-2"></i> Quản lý người dùng
+                                </a>
+                                <a th:href="@{/admin/vaccines}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-syringe me-2"></i> Quản lý vắc-xin
+                                </a>
+                                <a th:href="@{/admin/appointments}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-calendar-check me-2"></i> Quản lý lịch hẹn
+                                </a>
+                                <a th:href="@{/payments/admin/list}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-credit-card me-2"></i> Quản lý thanh toán
+                                </a>
+                                <a th:href="@{/admin/reports}" class="list-group-item list-group-item-action active">
+                                    <i class="fas fa-chart-bar me-2"></i> Báo cáo & Thống kê
+                                </a>
+                                <a th:href="@{/admin/settings}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-cog me-2"></i> Cài đặt hệ thống
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="col-md-9">
+                            <div class="card mb-4">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Bộ lọc báo cáo</h5>
+                                    <button class="btn btn-sm btn-primary" id="generateReportBtn">
+                                        <i class="fas fa-sync me-1"></i> Tạo báo cáo
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <form id="reportFilterForm">
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="reportType" class="form-label">Loại báo cáo</label>
+                                                <select class="form-select" id="reportType">
+                                                    <option value="appointments">Lịch hẹn</option>
+                                                    <option value="vaccinations">Tiêm chủng</option>
+                                                    <option value="payments">Thanh toán</option>
+                                                    <option value="users">Người dùng</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="startDate" class="form-label">Từ ngày</label>
+                                                <input type="date" class="form-control" id="startDate">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="endDate" class="form-label">Đến ngày</label>
+                                                <input type="date" class="form-control" id="endDate">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="groupBy" class="form-label">Nhóm theo</label>
+                                                <select class="form-select" id="groupBy">
+                                                    <option value="day">Ngày</option>
+                                                    <option value="week">Tuần</option>
+                                                    <option value="month">Tháng</option>
+                                                    <option value="quarter">Quý</option>
+                                                    <option value="year">Năm</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="format" class="form-label">Định dạng</label>
+                                                <select class="form-select" id="format">
+                                                    <option value="chart">Biểu đồ</option>
+                                                    <option value="table">Bảng</option>
+                                                    <option value="both">Cả hai</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="exportFormat" class="form-label">Xuất báo cáo</label>
+                                                <select class="form-select" id="exportFormat">
+                                                    <option value="pdf">PDF</option>
+                                                    <option value="excel">Excel</option>
+                                                    <option value="csv">CSV</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Thống kê tổng quan</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3 mb-3">
+                                            <div class="card bg-primary text-white h-100">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">Tổng người dùng</h5>
+                                                    <h2 class="display-6" th:text="${totalUsers}">150</h2>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <div class="card bg-success text-white h-100">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">Tổng trẻ em</h5>
+                                                    <h2 class="display-6" th:text="${totalChildren}">200</h2>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <div class="card bg-info text-white h-100">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">Lịch hẹn tháng này</h5>
+                                                    <h2 class="display-6" th:text="${totalAppointments}">120</h2>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <div class="card bg-warning text-dark h-100">
+                                                <div class="card-body">
+                                                    <h5 class="card-title">Doanh thu tháng</h5>
+                                                    <h2 class="display-6">150M</h2>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Báo cáo lịch hẹn</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="nav nav-tabs mb-3" id="reportTabs" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="chart-tab" data-bs-toggle="tab" data-bs-target="#chart-tab-pane" type="button" role="tab" aria-controls="chart-tab-pane" aria-selected="true">Biểu đồ</button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="table-tab" data-bs-toggle="tab" data-bs-target="#table-tab-pane" type="button" role="tab" aria-controls="table-tab-pane" aria-selected="false">Bảng</button>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content" id="reportTabContent">
+                                        <div class="tab-pane fade show active" id="chart-tab-pane" role="tabpanel" aria-labelledby="chart-tab" tabindex="0">
+                                            <div class="chart-container" style="position: relative; height:400px;">
+                                                <canvas id="appointmentChart"></canvas>
+                                            </div>
+                                        </div>
+                                        <div class="tab-pane fade" id="table-tab-pane" role="tabpanel" aria-labelledby="table-tab" tabindex="0">
+                                            <div class="table-responsive">
+                                                <table class="table table-striped table-hover">
+                                                    <thead>
+                                                    <tr>
+                                                        <th>Thời gian</th>
+                                                        <th>Tổng lịch hẹn</th>
+                                                        <th>Đã xác nhận</th>
+                                                        <th>Hoàn thành</th>
+                                                        <th>Đã hủy</th>
+                                                        <th>Không đến</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    <tr>
+                                                        <td>11/2023</td>
+                                                        <td>150</td>
+                                                        <td>120</td>
+                                                        <td>100</td>
+                                                        <td>20</td>
+                                                        <td>10</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>10/2023</td>
+                                                        <td>140</td>
+                                                        <td>110</td>
+                                                        <td>95</td>
+                                                        <td>15</td>
+                                                        <td>10</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>09/2023</td>
+                                                        <td>130</td>
+                                                        <td>100</td>
+                                                        <td>90</td>
+                                                        <td>10</td>
+                                                        <td>10</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>08/2023</td>
+                                                        <td>120</td>
+                                                        <td>100</td>
+                                                        <td>85</td>
+                                                        <td>10</td>
+                                                        <td>5</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>07/2023</td>
+                                                        <td>110</td>
+                                                        <td>90</td>
+                                                        <td>80</td>
+                                                        <td>10</td>
+                                                        <td>0</td>
+                                                    </tr>
+                                                    </tbody>
+                                                    <tfoot>
+                                                    <tr class="table-primary">
+                                                        <th>Tổng cộng</th>
+                                                        <th>650</th>
+                                                        <th>520</th>
+                                                        <th>450</th>
+                                                        <th>65</th>
+                                                        <th>35</th>
+                                                    </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+                                            <div class="mt-3">
+                                                <button class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-file-excel me-1"></i> Xuất Excel
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-file-pdf me-1"></i> Xuất PDF
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Báo cáo doanh thu</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container" style="position: relative; height:400px;">
+                                        <canvas id="revenueChart"></canvas>
+                                    </div>
+                                    <div class="row mt-4">
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <h6 class="card-title">Tổng doanh thu</h6>
+                                                    <h3 class="text-primary">900.000.000 VNĐ</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <h6 class="card-title">Doanh thu tháng này</h6>
+                                                    <h3 class="text-success">150.000.000 VNĐ</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body text-center">
+                                                    <h6 class="card-title">Tăng trưởng</h6>
+                                                    <h3 class="text-info">+15%</h3>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0">Thống kê vắc-xin</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="chart-container" style="position: relative; height:300px;">
+                                                <canvas id="vaccineChart"></canvas>
+                                            </div>
+                                            <div class="mt-3">
+                                                <h6>Vắc-xin phổ biến nhất</h6>
+                                                <ul class="list-group list-group-flush">
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        Vắc-xin 5 trong 1
+                                                        <span class="badge bg-primary rounded-pill">35%</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        Viêm gan B
+                                                        <span class="badge bg-primary rounded-pill">20%</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                        Sởi-Quai bị-Rubella
+                                                        <span class="badge bg-primary rounded-pill">15%</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card mb-4">
+                                        <div class="card-header bg-light">
+                                            <h5 class="mb-0">Phân bố độ tuổi</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="chart-container" style="position: relative; height:300px;">
+                                                <canvas id="ageChart"></canvas>
+                                            </div>
+                                            <div class="mt-3">
+                                                <h6>Phân bố theo độ tuổi</h6>
+                                                <div class="progress mb-2" style="height: 20px;">
+                                                    <div class="progress-bar bg-success" role="progressbar" style="width: 40%;" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100">0-1 tuổi (40%)</div>
+                                                </div>
+                                                <div class="progress mb-2" style="height: 20px;">
+                                                    <div class="progress-bar bg-info" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">1-2 tuổi (25%)</div>
+                                                </div>
+                                                <div class="progress mb-2" style="height: 20px;">
+                                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 15%;" aria-valuenow="15" aria-valuemin="0" aria-valuemax="100">2-3 tuổi (15%)</div>
+                                                </div>
+                                                <div class="progress mb-2" style="height: 20px;">
+                                                    <div class="progress-bar bg-danger" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">3+ tuổi (20%)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Báo cáo đánh giá dịch vụ</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="text-center mb-3">
+                                                <h1 class="display-4 text-warning">4.8</h1>
+                                                <div class="text-warning">
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star-half-alt"></i>
+                                                </div>
+                                                <p class="text-muted">Dựa trên 150 đánh giá</p>
+                                            </div>
+                                            <div class="card bg-light">
+                                                <div class="card-body">
+                                                    <h6>Phân loại đánh giá</h6>
+                                                    <div class="d-flex justify-content-between mb-1">
+                                                        <span>Dịch vụ</span>
+                                                        <span class="text-success">4.9 <i class="fas fa-star"></i></span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between mb-1">
+                                                        <span>Nhân viên</span>
+                                                        <span class="text-success">4.8 <i class="fas fa-star"></i></span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between mb-1">
+                                                        <span>Cơ sở vật chất</span>
+                                                        <span class="text-success">4.7 <i class="fas fa-star"></i></span>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between">
+                                                        <span>Giá cả</span>
+                                                        <span class="text-success">4.5 <i class="fas fa-star"></i></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <h6>Phân bố đánh giá</h6>
+                                            <div class="mb-3">
+                                                <div class="d-flex align-items-center">
+                                                    <div style="width: 60px">5 <i class="fas fa-star text-warning"></i></div>
+                                                    <div class="progress flex-grow-1 me-3" style="height: 10px">
+                                                        <div class="progress-bar bg-success" role="progressbar" style="width: 75%"
+                                                             aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
+                                                    <div style="width: 40px">75%</div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="d-flex align-items-center">
+                                                    <div style="width: 60px">4 <i class="fas fa-star text-warning"></i></div>
+                                                    <div class="progress flex-grow-1 me-3" style="height: 10px">
+                                                        <div class="progress-bar bg-success" role="progressbar" style="width: 18%"
+                                                             aria-valuenow="18" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
+                                                    <div style="width: 40px">18%</div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="d-flex align-items-center">
+                                                    <div style="width: 60px">3 <i class="fas fa-star text-warning"></i></div>
+                                                    <div class="progress flex-grow-1 me-3" style="height: 10px">
+                                                        <div class="progress-bar bg-info" role="progressbar" style="width: 5%"
+                                                             aria-valuenow="5" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
+                                                    <div style="width: 40px">5%</div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="d-flex align-items-center">
+                                                    <div style="width: 60px">2 <i class="fas fa-star text-warning"></i></div>
+                                                    <div class="progress flex-grow-1 me-3" style="height: 10px">
+                                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 1%"
+                                                             aria-valuenow="1" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
+                                                    <div style="width: 40px">1%</div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="d-flex align-items-center">
+                                                    <div style="width: 60px">1 <i class="fas fa-star text-warning"></i></div>
+                                                    <div class="progress flex-grow-1 me-3" style="height: 10px">
+                                                        <div class="progress-bar bg-danger" role="progressbar" style="width: 1%"
+                                                             aria-valuenow="1" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
+                                                    <div style="width: 40px">1%</div>
+                                                </div>
+                                            </div>
+
+                                            <h6 class="mt-4">Đánh giá gần đây</h6>
+                                            <div class="list-group">
+                                                <div class="list-group-item">
+                                                    <div class="d-flex justify-content-between">
+                                                        <h6 class="mb-1">Nguyễn Văn A</h6>
+                                                        <small class="text-muted">01/11/2023</small>
+                                                    </div>
+                                                    <div class="text-warning mb-1">
+                                                        <i class="fas fa-star"></i>
+                                                        <i class="fas fa-star"></i>
+                                                        <i class="fas fa-star"></i>
+                                                        <i class="fas fa-star"></i>
+                                                        <i class="fas fa-star"></i>
+                                                    </div>
+                                                    <p class="mb-1">Dịch vụ rất tốt, nhân viên thân thiện và chuyên nghiệp.</p>
+                                                </div>
+                                                <div class="list-group-item">
+                                                    <div class="d-flex justify-content-between">
+                                                        <h6 class="mb-1">Trần Thị B</h6>
+                                                        <small class="text-muted">28/10/2023</small>
+                                                    </div>
+                                                    <div class="text-warning mb-1">
+                                                        <i class="fas fa-star"></i>
+                                                        <i class="fas fa-star"></i>
+                                                        <i class="fas fa-star"></i>
+                                                        <i class="fas fa-star"></i>
+                                                        <i class="far fa-star"></i>
+                                                    </div>
+                                                    <p class="mb-1">Hài lòng với dịch vụ, tuy nhiên thời gian chờ hơi lâu.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button class="btn btn-primary me-md-2" id="exportPdfBtn">
+                                    <i class="fas fa-file-pdf me-1"></i> Xuất báo cáo PDF
+                                </button>
+                                <button class="btn btn-success" id="exportExcelBtn">
+                                    <i class="fas fa-file-excel me-1"></i> Xuất báo cáo Excel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:replace="~{layout :: footer}"></div>
+
+                <!-- Thêm thư viện Chart.js -->
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+                <script th:inline="javascript">
+                    document.addEventListener('DOMContentLoaded', function() {
+                        // Biểu đồ lịch hẹn
+                        var appointmentCtx = document.getElementById('appointmentChart').getContext('2d');
+                        var appointmentChart = new Chart(appointmentCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: ['07/2023', '08/2023', '09/2023', '10/2023', '11/2023'],
+                                datasets: [{
+                                    label: 'Tổng lịch hẹn',
+                                    data: [110, 120, 130, 140, 150],
+                                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                                    borderColor: 'rgba(54, 162, 235, 1)',
+                                    borderWidth: 1
+                                }, {
+                                    label: 'Hoàn thành',
+                                    data: [80, 85, 90, 95, 100],
+                                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    borderWidth: 1
+                                }, {
+                                    label: 'Đã hủy',
+                                    data: [10, 10, 10, 15, 20],
+                                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                                    borderColor: 'rgba(255, 99, 132, 1)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true
+                                    }
+                                }
+                            }
+                        });
+
+                        // Biểu đồ doanh thu
+                        var revenueCtx = document.getElementById('revenueChart').getContext('2d');
+                        var revenueChart = new Chart(revenueCtx, {
+                            type: 'line',
+                            data: {
+                                labels: ['07/2023', '08/2023', '09/2023', '10/2023', '11/2023'],
+                                datasets: [{
+                                    label: 'Doanh thu (triệu VNĐ)',
+                                    data: [120, 150, 180, 200, 250],
+                                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                    borderWidth: 2,
+                                    tension: 0.1,
+                                    fill: true
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true
+                                    }
+                                }
+                            }
+                        });
+                        // Biểu đồ vắc-xin
+                        var vaccineCtx = document.getElementById('vaccineChart').getContext('2d');
+                        var vaccineChart = new Chart(vaccineCtx, {
+                            type: 'pie',
+                            data: {
+                                labels: ['5 trong 1', 'Viêm gan B', 'Sởi-Quai bị-Rubella', 'Bại liệt', 'Khác'],
+                                datasets: [{
+                                    data: [35, 20, 15, 15, 15],
+                                    backgroundColor: [
+                                        'rgba(255, 99, 132, 0.7)',
+                                        'rgba(54, 162, 235, 0.7)',
+                                        'rgba(255, 206, 86, 0.7)',
+                                        'rgba(75, 192, 192, 0.7)',
+                                        'rgba(153, 102, 255, 0.7)'
+                                    ],
+                                    borderColor: [
+                                        'rgba(255, 99, 132, 1)',
+                                        'rgba(54, 162, 235, 1)',
+                                        'rgba(255, 206, 86, 1)',
+                                        'rgba(75, 192, 192, 1)',
+                                        'rgba(153, 102, 255, 1)'
+                                    ],
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(tooltipItem) {
+                                                return tooltipItem.label + ': ' + tooltipItem.raw + '%';
+                                            }
+                                        },
+                                    }
+                                }
+                            }
+                        });
+
+                        // Biểu đồ độ tuổi
+                        var ageCtx = document.getElementById('ageChart').getContext('2d');
+                        var ageChart = new Chart(ageCtx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['0-1 tuổi', '1-2 tuổi', '2-3 tuổi', '3-5 tuổi', '5+ tuổi'],
+                                datasets: [{
+                                    data: [40, 25, 15, 10, 10],
+                                    backgroundColor: [
+                                        'rgba(255, 99, 132, 0.7)',
+                                        'rgba(54, 162, 235, 0.7)',
+                                        'rgba(255, 206, 86, 0.7)',
+                                        'rgba(75, 192, 192, 0.7)',
+                                        'rgba(153, 102, 255, 0.7)'
+                                    ],
+                                    borderColor: [
+                                        'rgba(255, 99, 132, 1)',
+                                        'rgba(54, 162, 235, 1)',
+                                        'rgba(255, 206, 86, 1)',
+                                        'rgba(75, 192, 192, 1)',
+                                        'rgba(153, 102, 255, 1)'
+                                    ],
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(tooltipItem) {
+                                                return tooltipItem.label + ': ' + tooltipItem.raw + '%';
+                                            }
+                                        },
+                                    }
+                                }
+                            }
+                        });
+                    });
+                </script>
+                </body>
+                </html>

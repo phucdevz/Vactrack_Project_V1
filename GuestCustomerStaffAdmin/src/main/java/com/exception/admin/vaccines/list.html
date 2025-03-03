@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Danh sách vắc-xin - Hệ thống quản lý tiêm chủng</title>
+</head>
+<body>
+<div th:replace="~{layout :: header}"></div>
+
+<div th:fragment="content">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Danh sách vắc-xin</h2>
+    <a th:href="@{/admin/vaccines/add}" class="btn btn-primary">
+      <i class="fas fa-plus me-1"></i> Thêm mới
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div th:if="${vaccines.empty}" class="alert alert-info">
+        <i class="fas fa-info-circle me-1"></i> Chưa có vắc-xin nào trong hệ thống.
+      </div>
+
+      <div th:if="${!vaccines.empty}" class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+          <tr>
+            <th>#</th>
+            <th>Tên vắc-xin</th>
+            <th>Miêu tả</th>
+            <th>Giá</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="vaccine, stat : ${vaccines}">
+            <td th:text="${stat.count}">1</td>
+            <td th:text="${vaccine.name}">Vắc-xin 5 trong 1</td>
+            <td th:text="${vaccine.description}">Miêu tả về vắc-xin</td>
+            <td th:text="${#numbers.formatDecimal(vaccine.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">1,500,000 VNĐ</td>
+            <td>
+                                    <span th:classappend="${vaccine.active ? 'text-success' : 'text-danger'}"
+                                          th:text="${vaccine.active ? 'Đang hoạt động' : 'Đã ngừng'}"></span>
+            </td>
+            <td>
+              <div class="btn-group">
+                <a th:href="@{/admin/vaccines/{id}(id=${vaccine.id})}" class="btn btn-sm btn-info">
+                  <i class="fas fa-eye"></i>
+                </a>
+                <a th:href="@{/admin/vaccines/{id}/edit(id=${vaccine.id})}" class="btn btn-sm btn-warning">
+                  <i class="fas fa-edit"></i>
+                </a>
+                <a th:href="@{/admin/vaccines/{id}/activate(id=${vaccine.id})}" class="btn btn-sm btn-success">
+                  <i class="fas fa-check"></i>
+                </a>
+                <a th:href="@{/admin/vaccines/{id}/deactivate(id=${vaccine.id})}" class="btn btn-sm btn-danger">
+                  <i class="fas fa-times"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div th:replace="~{layout :: footer}"></div>
+</body>
+</html>

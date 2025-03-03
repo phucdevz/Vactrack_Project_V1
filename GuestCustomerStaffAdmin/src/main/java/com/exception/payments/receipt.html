@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hóa đơn thanh toán - Hệ thống quản lý tiêm chủng</title>
+  <style>
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        font-size: 12pt;
+      }
+      .container {
+        width: 100%;
+        max-width: 100%;
+      }
+    }
+    .receipt {
+      border: 1px solid #ddd;
+      padding: 20px;
+      margin-bottom: 20px;
+      background-color: #fff;
+    }
+    .receipt-header {
+      text-align: center;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 10px;
+    }
+    .receipt-body {
+      margin-bottom: 20px;
+    }
+    .receipt-footer {
+      text-align: center;
+      font-style: italic;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+<div th:replace="~{layout :: header}" class="no-print"></div>
+
+<div th:fragment="content">
+  <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <h2>Hóa đơn thanh toán</h2>
+    <div>
+      <button onclick="window.print()" class="btn btn-primary me-2">
+        <i class="fas fa-print me-1"></i> In hóa đơn
+      </button>
+      <a th:href="@{/payments}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i> Quay lại
+      </a>
+    </div>
+  </div>
+
+  <div class="receipt">
+    <div class="receipt-header">
+      <h3>TRUNG TÂM TIÊM CHỦNG</h3>
+      <p>Địa chỉ: 123 Đường ABC, Quận XYZ, TP. HCM</p>
+      <p>Điện thoại: (028) 1234 5678 - Email: info@tiemchung.com</p>
+      <h4>HÓA ĐƠN THANH TOÁN</h4>
+      <p>Mã hóa đơn: <strong th:text="${'INV-' + payment.id}">INV-001</strong></p>
+      <p>Ngày: <strong th:text="${#temporals.format(payment.paymentDate, 'dd/MM/yyyy HH:mm')}">01/11/2023 10:30</strong></p>
+    </div>
+
+    <div class="receipt-body">
+      <div class="row mb-3">
+        <div class="col-6">
+          <h5>Thông tin khách hàng:</h5>
+          <p>Họ tên: <strong th:text="${payment.appointment.child.parent.fullName}">Nguyễn Văn X</strong></p>
+          <p>Điện thoại: <strong th:text="${payment.appointment.child.parent.phone}">0123456789</strong></p>
+          <p>Email: <strong th:text="${payment.appointment.child.parent.email}">email@example.com</strong></p>
+        </div>
+        <div class="col-6">
+          <h5>Thông tin bệnh nhân:</h5>
+          <p>Họ tên: <strong th:text="${payment.appointment.child.name}">Nguyễn Văn A</strong></p>
+          <p>Ngày sinh: <strong th:text="${#temporals.format(payment.appointment.child.birthDate, 'dd/MM/yyyy')}">01/01/2020</strong></p>
+        </div>
+      </div>
+
+      <h5>Chi tiết dịch vụ:</h5>
+      <table class="table table-bordered">
+        <thead>
+        <tr>
+          <th>STT</th>
+          <th>Dịch vụ</th>
+          <th>Đơn giá</th>
+          <th>Số lượng</th>
+          <th>Thành tiền</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="av, stat : ${payment.appointment.appointmentVaccines}">
+          <td th:text="${stat.count}">1</td>
+          <td th:text="${av.vaccine.name}">Vắc-xin 5 trong 1</td>
+          <td th:text="${#numbers.formatDecimal(av.vaccine.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">1,500,000 VNĐ</td>
+          <td>1</td>
+          <td th:text="${#numbers.formatDecimal(av.vaccine.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">1,500,000 VNĐ</td>
+        </tr>
+        </tbody>
+        <tfoot>
+        <tr>
+          <td colspan="4" class="text-end fw-bold">Tổng cộng:</td>
+          <td class="fw-bold" th:text="${#numbers.formatDecimal(payment.amount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">
+            1,500,000 VNĐ
+          </td>
+        </tr>
+        </tfoot>
+      </table>
+
+      <div class="row mt-4">
+        <div class="col-6">
+          <h5>Thông tin thanh toán:</h5>
+          <p>Phương thức: <strong th:text="${payment.paymentMethod == T(main.java.com.model.Payment.PaymentMethod).CASH ? 'Tiền mặt' :
+                                                         (payment.paymentMethod == T(main.java.com.model.Payment.PaymentMethod).CREDIT_CARD ? 'Thẻ tín dụng' :
+                                                         (payment.paymentMethod == T(main.java.com.model.Payment.PaymentMethod).DEBIT_CARD ? 'Thẻ ghi nợ' :
+                                                         (payment.paymentMethod == T(main.java.com.model.Payment.PaymentMethod).BANK_TRANSFER ? 'Chuyển khoản ngân hàng' : 'Ví điện tử')))}">
+            Tiền mặt
+          </strong></p>
+          <p>Trạng thái: <strong>Đã thanh toán</strong></p>
+          <p th:if="${payment.transactionId != null}">Mã giao dịch: <strong th:text="${payment.transactionId}">TX12345</strong></p>
+        </div>
+        <div class="col-6 text-end">
+          <h5>Tổng thanh toán:</h5>
+          <h3 class="text-primary" th:text="${#numbers.formatDecimal(payment.amount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">
+            1,500,000 VNĐ
+          </h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="receipt-footer">
+      <p>Cảm ơn quý khách đã sử dụng dịch vụ!</p>
+      <p>Hóa đơn này được tạo tự động từ hệ thống và có giá trị pháp lý.</p>
+      <p>Để biết thêm thông tin, vui lòng liên hệ: (028) 1234 5678</p>
+    </div>
+  </div>
+</div>
+
+<div th:replace="~{layout :: footer}" class="no-print"></div>
+</body>
+</html>

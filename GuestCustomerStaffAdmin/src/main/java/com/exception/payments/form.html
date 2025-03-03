@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanh toán - Hệ thống quản lý tiêm chủng</title>
+</head>
+<body>
+<div th:replace="~{layout :: header}"></div>
+
+<div th:fragment="content">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Thanh toán dịch vụ tiêm chủng</h2>
+    <a th:href="@{/appointments/{id}(id=${appointment.id})}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left me-1"></i> Quay lại
+    </a>
+  </div>
+
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card mb-4">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Thông tin lịch hẹn</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Mã lịch hẹn:</label>
+                <p th:text="${appointment.id}">AP001</p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Ngày hẹn:</label>
+                <p th:text="${#temporals.format(appointment.appointmentDate, 'dd/MM/yyyy')}">01/11/2023</p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Giờ hẹn:</label>
+                <p th:text="${#temporals.format(appointment.appointmentTime, 'HH:mm')}">09:00</p>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Tên trẻ:</label>
+                <p th:text="${appointment.childName}">Nguyễn Văn A</p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Trạng thái:</label>
+                <span class="badge bg-success">Hoàn thành</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+              <tr>
+                <th>#</th>
+                <th>Tên vắc-xin</th>
+                <th>Liều</th>
+                <th>Giá</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr th:each="vaccine, stat : ${appointment.vaccineNames}">
+                <td th:text="${stat.count}">1</td>
+                <td th:text="${vaccine}">Vắc-xin 5 trong 1</td>
+                <td>1</td>
+                <td>1,500,000 VNĐ</td>
+              </tr>
+              </tbody>
+              <tfoot>
+              <tr>
+                <td colspan="3" class="text-end fw-bold">Tổng cộng:</td>
+                <td class="fw-bold" th:text="${#numbers.formatDecimal(payment.amount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">
+                  1,500,000 VNĐ
+                </td>
+              </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Phương thức thanh toán</h5>
+        </div>
+        <div class="card-body">
+          <form th:action="@{/payments/appointment/{id}(id=${appointment.id})}" method="post">
+            <div class="mb-4">
+              <label class="form-label fw-bold">Tổng tiền thanh toán:</label>
+              <h3 class="text-primary" th:text="${#numbers.formatDecimal(payment.amount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">
+                1,500,000 VNĐ
+              </h3>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Chọn phương thức thanh toán:</label>
+              <div class="form-check mb-2" th:each="method : ${paymentMethods}">
+                <input class="form-check-input payment-method" type="radio" name="paymentMethod"
+                       th:id="${'payment-' + method}" th:value="${method}" required>
+                <label class="form-check-label" th:for="${'payment-' + method}"
+                       th:text="${method == T(main.java.com.model.Payment.PaymentMethod).CASH ? 'Tiền mặt' :
+                                                   (method == T(main.java.com.model.Payment.PaymentMethod).CREDIT_CARD ? 'Thẻ tín dụng' :
+                                                   (method == T(main.java.com.model.Payment.PaymentMethod).DEBIT_CARD ? 'Thẻ ghi nợ' :
+                                                   (method == T(main.java.com.model.Payment.PaymentMethod).BANK_TRANSFER ? 'Chuyển khoản ngân hàng' : 'Ví điện tử')))}">
+                  Tiền mặt
+                </label>
+              </div>
+            </div>
+
+            <div id="creditCardForm" class="mb-3 d-none">
+              <div class="mb-3">
+                <label for="cardNumber" class="form-label">Số thẻ:</label>
+                <input type="text" class="form-control" id="cardNumber" placeholder="XXXX XXXX XXXX XXXX">
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="expiryDate" class="form-label">Ngày hết hạn:</label>
+                  <input type="text" class="form-control" id="expiryDate" placeholder="MM/YY">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="cvv" class="form-label">CVV:</label>
+                  <input type="text" class="form-control" id="cvv" placeholder="XXX">
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="cardholderName" class="form-label">Tên chủ thẻ:</label>
+                <input type="text" class="form-control" id="cardholderName">
+              </div>
+            </div>
+
+            <div id="bankTransferInfo" class="mb-3 alert alert-info d-none">
+              <h6 class="alert-heading">Thông tin chuyển khoản:</h6>
+              <p class="mb-1">Ngân hàng: <strong>BIDV</strong></p>
+              <p class="mb-1">Số tài khoản: <strong>12345678900</strong></p>
+              <p class="mb-1">Chủ tài khoản: <strong>TRUNG TÂM TIÊM CHỦNG</strong></p>
+              <p class="mb-1">Nội dung: <strong>THANH TOAN AP<span th:text="${appointment.id}">001</span></strong></p>
+              <p class="mb-0 fst-italic">Vui lòng chuyển khoản và cung cấp biên lai cho nhân viên.</p>
+            </div>
+
+            <div id="eWalletInfo" class="mb-3 alert alert-info d-none">
+              <h6 class="alert-heading">Thông tin ví điện tử:</h6>
+              <p class="mb-1">Quét mã QR bên dưới để thanh toán:</p>
+              <div class="text-center my-3">
+                <img src="https://via.placeholder.com/150" alt="QR Code" class="img-thumbnail">
+              </div>
+              <p class="mb-0 fst-italic">Vui lòng thanh toán và cung cấp biên lai cho nhân viên.</p>
+            </div>
+
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle me-1"></i> Lưu ý: Thanh toán sẽ được xác nhận bởi nhân viên sau khi hoàn tất.
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-check me-1"></i> Xác nhận thanh toán
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div th:replace="~{layout :: footer}"></div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const paymentMethods = document.querySelectorAll('.payment-method');
+    const creditCardForm = document.getElementById('creditCardForm');
+    const bankTransferInfo = document.getElementById('bankTransferInfo');
+    const eWalletInfo = document.getElementById('eWalletInfo');
+
+    paymentMethods.forEach(method => {
+      method.addEventListener('change', function() {
+        // Ẩn tất cả các form
+        creditCardForm.classList.add('d-none');
+        bankTransferInfo.classList.add('d-none');
+        eWalletInfo.classList.add('d-none');
+
+        // Hiển thị form tương ứng
+        if (this.value === 'CREDIT_CARD' || this.value === 'DEBIT_CARD') {
+          creditCardForm.classList.remove('d-none');
+        } else if (this.value === 'BANK_TRANSFER') {
+          bankTransferInfo.classList.remove('d-none');
+        } else if (this.value === 'E_WALLET') {
+          eWalletInfo.classList.remove('d-none');
+        }
+      });
+    });
+  });
+</script>
+</body>
+</html>
