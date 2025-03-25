@@ -4,6 +4,7 @@ GuestCustomerStaffAdmin built by Agency UTH
 # HỆ THỐNG QUẢN LÝ TIÊM CHỦNG (VacTrack Project)
 
 ## Kế Hoạch Phát Triển
+![image](https://github.com/user-attachments/assets/c88fb297-e0b3-4c93-8ab2-fe8001966b96)
 
 ### 🌟 Giai Đoạn 1: Thiết Kế và Chuẩn Bị (2-3 Tuần)
 - ✨ Phân tích yêu cầu chi tiết
