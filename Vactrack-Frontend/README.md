@@ -1,4 +1,4 @@
-# Welcome to your Vactrack project
+# Welcome to your Vactrack Project
 
 ## Project info
 
@@ -8,9 +8,12 @@
 There are several ways of editing your application.
 
 **Use Vactrack**
-
-Click ![image](https://github.com/user-attachments/assets/3536bb13-c23f-4d99-9974-293d37d341aa)
-
+```Click run.bat 
+Automatically install missing module 
+Automatically run code
+```
+![image](https://github.com/user-attachments/assets/3536bb13-c23f-4d99-9974-293d37d341aa)
+![image](https://github.com/user-attachments/assets/44b79592-362c-44a3-950e-71d163335216)
 
 Or follow these steps:
 
