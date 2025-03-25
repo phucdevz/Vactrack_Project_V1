@@ -1,0 +1,5 @@
+Install môi trường nodejs 
+run npm install (trên cmd)
+run npm run dev
+
+http://localhost:8081/ (url)
