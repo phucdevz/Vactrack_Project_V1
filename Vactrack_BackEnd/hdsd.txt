@@ -1,0 +1,65 @@
+DataBase H2 (user: sa ; pass : 1)
+
+http://localhost:8080/h2-console
+-------------------------------------------------------------
+
+API Login (GET)
+
+http://localhost:8080/api/auth/login
+--------------------------------------------------------------
+
+API Register (POST)
+
+http://localhost:8080/api/auth/register
+--------------------------------------------------------------
+
+API Register ADMIM (POST)
+
+http://localhost:8080/api/admin/register
+
+--------------------------------------------------------------
+
+
+RegAccount By POSTMAN
+
+[+] USER JSON
+
+{
+  "name": "user",
+  "email": "admin@subsieunhanh.com",
+  "password": "1"
+}
+
+[+] ADMIN JSON (http://localhost:8080/api/admin/register)
+{
+  "name": "Admin",
+  "email": "admin@subsieunhanh.com",
+  "password": "admin123"
+}
+
+[+] CHANGE ROLE USER ---> AMDIN JSON
+
+{
+  "role": "ADMIN"
+}
+
+
+
+-- Xem tất cả người dùng
+SELECT * FROM USERS;
+
+-- Xem người dùng theo email
+SELECT * FROM USERS WHERE EMAIL = 'test@example.com';
+
+-- Đếm tổng số người dùng
+SELECT COUNT(*) FROM USERS;
+
+-- Xem thông tin người dùng mới nhất
+SELECT * FROM USERS ORDER BY ID DESC LIMIT 1;
+
+-- Cập nhật mật khẩu 
+UPDATE USERS SET PASSWORD = 'newpassword' WHERE EMAIL = 'test@example.com';
+
+-- Xóa người dùng
+DELETE FROM USERS WHERE EMAIL = 'test@example.com';
+

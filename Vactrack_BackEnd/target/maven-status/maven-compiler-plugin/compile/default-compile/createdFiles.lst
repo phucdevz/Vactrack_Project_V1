@@ -1,0 +1,17 @@
+com\vactrack\model\User.class
+com\vactrack\controller\AuthController.class
+com\vactrack\service\AuthService.class
+com\vactrack\VacTrackApplication.class
+com\vactrack\exception\ApiException.class
+com\vactrack\config\SecurityConfig.class
+com\vactrack\config\CorsConfig.class
+com\vactrack\config\JwtConfig.class
+com\vactrack\security\JwtAuthenticationFilter.class
+com\vactrack\dto\AuthResponse.class
+com\vactrack\dto\LoginRequest.class
+com\vactrack\exception\GlobalExceptionHandler.class
+com\vactrack\service\UserDetailsServiceImpl.class
+com\vactrack\dto\AuthResponse$UserDTO.class
+com\vactrack\repository\UserRepository.class
+com\vactrack\dto\RegisterRequest.class
+com\vactrack\security\JwtTokenProvider.class
