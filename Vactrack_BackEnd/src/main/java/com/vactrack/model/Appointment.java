@@ -25,6 +25,8 @@ public class Appointment {
 
     private String notes;
 
+    private String phone;
+
     @ManyToOne
     @JoinColumn(name = "child_id")
     private Child child;
@@ -92,5 +94,13 @@ public class Appointment {
 
     public void setChild(Child child) {
         this.child = child;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 }
