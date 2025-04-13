@@ -19,9 +19,15 @@ interface AuthContextType {
   isLoggedIn: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  loginWithFacebook: () => Promise<void>;
   logout: () => void;
   isLoading: boolean;
   isAdmin: boolean;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsAdmin: React.Dispatch<React.SetStateAction<boolean>>;
+  retrieveTokenFromUrl: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,6 +37,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
+  // Configure Axios interceptors to always add the token
+  useEffect(() => {
+    // Add a request interceptor to include token in every request
+    const interceptor = axios.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem("token");
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    // Cleanup interceptor on unmount
+    return () => {
+      axios.interceptors.request.eject(interceptor);
+    };
+  }, []);
 
   // Check for existing login on mount
   useEffect(() => {
@@ -43,9 +71,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const userData = JSON.parse(storedUser);
       setUser(userData);
       setIsLoggedIn(true);
-      setIsAdmin(userData.role === "ADMIN"); // Kiểm tra role "ADMIN" thay vì "admin"
+      setIsAdmin(userData.role === "ADMIN");
     }
   }, []);
+
+  // Helper function to extract token from URL
+  const retrieveTokenFromUrl = (): string | null => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('token');
+  };
 
   // Login function that connects to Spring Boot backend
   const login = async (email: string, password: string) => {
@@ -67,12 +101,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       setUser(userData);
       setIsLoggedIn(true);
-      setIsAdmin(userData.role === "ADMIN"); // Kiểm tra role "ADMIN" thay vì "admin"
+      setIsAdmin(userData.role === "ADMIN");
     } catch (error) {
       console.error("Login failed:", error);
       throw error;
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Login with Google - open in same window to avoid popup issues
+  const loginWithGoogle = async () => {
+    setIsLoading(true);
+    try {
+      // Instead of using a popup, directly redirect to the Google auth endpoint
+      // with a specific callback URL parameter
+      const callbackUrl = encodeURIComponent(window.location.origin + '/oauth2/redirect');
+      window.location.href = `${API_URL}/auth/google?redirect_uri=${callbackUrl}`;
+    } catch (error) {
+      console.error("Google login failed:", error);
+      setIsLoading(false);
+      throw error;
+    }
+  };
+
+  // Login with Facebook - open in same window to avoid popup issues
+  const loginWithFacebook = async () => {
+    setIsLoading(true);
+    try {
+      // Instead of using a popup, directly redirect to the Facebook auth endpoint
+      // with a specific callback URL parameter
+      const callbackUrl = encodeURIComponent(window.location.origin + '/oauth2/redirect');
+      window.location.href = `${API_URL}/auth/facebook?redirect_uri=${callbackUrl}`;
+    } catch (error) {
+      console.error("Facebook login failed:", error);
+      setIsLoading(false);
+      throw error;
     }
   };
 
@@ -97,7 +161,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       setUser(userData);
       setIsLoggedIn(true);
-      setIsAdmin(userData.role === "ADMIN"); // Kiểm tra role "ADMIN" thay vì "admin"
+      setIsAdmin(userData.role === "ADMIN");
     } catch (error) {
       console.error("Registration failed:", error);
       throw error;
@@ -121,7 +185,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn, login, register, logout, isLoading, isAdmin }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      isLoggedIn, 
+      login, 
+      register, 
+      loginWithGoogle, 
+      loginWithFacebook, 
+      logout, 
+      isLoading, 
+      isAdmin,
+      setUser,
+      setIsLoggedIn,
+      setIsAdmin,
+      retrieveTokenFromUrl
+    }}>
       {children}
     </AuthContext.Provider>
   );
