@@ -1,8 +1,6 @@
 package com.vactrack.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDate;
-import java.util.List;
 
 @Entity
 @Table(name = "children")
@@ -12,17 +10,18 @@ public class Child {
     private Long id;
 
     private String name;
-
-    private LocalDate birthDate;
-
+    private String dob;
     private String gender;
+    private String bloodType;
 
-    @ManyToOne
-    @JoinColumn(name = "parent_id")
-    private User parent;
+    @Column(length = 500)
+    private String allergies;
 
-    @OneToMany(mappedBy = "child", cascade = CascadeType.ALL)
-    private List<Appointment> appointments;
+    @Column(length = 1000)
+    private String notes;
+
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     // Getters and Setters
     public Long getId() {
@@ -41,12 +40,12 @@ public class Child {
         this.name = name;
     }
 
-    public LocalDate getBirthDate() {
-        return birthDate;
+    public String getDob() {
+        return dob;
     }
 
-    public void setBirthDate(LocalDate birthDate) {
-        this.birthDate = birthDate;
+    public void setDob(String dob) {
+        this.dob = dob;
     }
 
     public String getGender() {
@@ -57,19 +56,35 @@ public class Child {
         this.gender = gender;
     }
 
-    public User getParent() {
-        return parent;
+    public String getBloodType() {
+        return bloodType;
     }
 
-    public void setParent(User parent) {
-        this.parent = parent;
+    public void setBloodType(String bloodType) {
+        this.bloodType = bloodType;
     }
 
-    public List<Appointment> getAppointments() {
-        return appointments;
+    public String getAllergies() {
+        return allergies;
     }
 
-    public void setAppointments(List<Appointment> appointments) {
-        this.appointments = appointments;
+    public void setAllergies(String allergies) {
+        this.allergies = allergies;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 }
