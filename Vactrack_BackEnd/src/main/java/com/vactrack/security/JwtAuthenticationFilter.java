@@ -15,6 +15,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -35,7 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String userEmail;
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.startsWith("Bearer")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -49,13 +51,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwtTokenProvider.validateToken(jwt)) {
                 String role = jwtTokenProvider.extractRole(jwt);
 
+                // Trích xuất userId từ token
+                String userIdString = jwtTokenProvider.extractUserId(jwt);
+                Long userId = null;
+                if (userIdString != null) {
+                    try {
+                        userId = Long.parseLong(userIdString);
+                    } catch (NumberFormatException e) {
+                        logger.error("Failed to parse userId from token", e);
+                    }
+                }
+
+                // Tạo đối tượng chi tiết tùy chỉnh
+                Map<String, Object> details = new HashMap<>();
+                details.put("userId", userId);
+
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null,
                         Collections.singletonList(new SimpleGrantedAuthority(role))
                 );
 
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                // Lưu details vào authentication
+                authToken.setDetails(details);
+
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
