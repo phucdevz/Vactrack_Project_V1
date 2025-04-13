@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.ServletWebRequest;
@@ -76,6 +78,31 @@ public class GlobalExceptionHandler {
         body.put("path", getPath(request));
 
         return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
+    }
+
+    // Added for validation errors in contact and feedback forms
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationExceptions(
+            MethodArgumentNotValidException ex, WebRequest request) {
+
+        logger.error("Validation Exception: {}", ex.getMessage());
+
+        Map<String, String> validationErrors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            validationErrors.put(fieldName, errorMessage);
+        });
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", formatDate(LocalDateTime.now()));
+        body.put("status", HttpStatus.BAD_REQUEST.value());
+        body.put("error", "Bad Request");
+        body.put("message", "Dữ liệu đầu vào không hợp lệ");
+        body.put("errors", validationErrors);
+        body.put("path", getPath(request));
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
