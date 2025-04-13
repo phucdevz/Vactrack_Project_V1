@@ -22,17 +22,16 @@ public class VaccinationService {
     }
 
     public List<Map<String, Object>> getMonthlyData() {
-        LocalDate startDate = LocalDate.now().minusMonths(11);
-        List<Object[]> results = appointmentRepository.countByMonth(startDate);
-
         List<Map<String, Object>> monthlyData = new ArrayList<>();
-        for (Object[] result : results) {
-            Map<String, Object> data = new HashMap<>();
-            int month = ((Number) result[0]).intValue();
-            long count = ((Number) result[1]).longValue();
 
-            data.put("month", getMonthName(month));
-            data.put("count", count);
+        // Giả lập dữ liệu cho 12 tháng
+        String[] months = {"January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"};
+
+        for (String month : months) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("month", month);
+            data.put("count", (int) (Math.random() * 100)); // Random data for demonstration
             monthlyData.add(data);
         }
 
@@ -40,46 +39,66 @@ public class VaccinationService {
     }
 
     public List<Map<String, Object>> getDistributionByService() {
-        List<Object[]> results = appointmentRepository.countByService();
+        List<Map<String, Object>> distribution = new ArrayList<>();
 
-        long total = appointmentRepository.count();
-        List<Map<String, Object>> distributionData = new ArrayList<>();
+        // Giả lập phân phối theo loại dịch vụ
+        String[] services = {"BCG Vaccine", "Polio Vaccine", "Hepatitis B", "Measles", "MMR"};
+        int total = 100;
 
-        for (Object[] result : results) {
+        for (String service : services) {
             Map<String, Object> data = new HashMap<>();
-            String service = (String) result[0];
-            long count = ((Number) result[1]).longValue();
-            double percentage = (double) count / total * 100;
-
+            int percentage = (int) (Math.random() * 30) + 5; // 5% to 35%
             data.put("service", service);
-            data.put("percentage", Math.round(percentage * 100.0) / 100.0); // Round to 2 decimal places
-            distributionData.add(data);
+            data.put("percentage", percentage);
+            distribution.add(data);
+            total -= percentage;
         }
 
-        return distributionData;
+        // Thêm phần còn lại nếu cần
+        if (total > 0) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("service", "Others");
+            data.put("percentage", total);
+            distribution.add(data);
+        }
+
+        return distribution;
     }
 
     public List<Map<String, Object>> getTrendData(String period) {
-        // This is a simplified implementation
-        // In a real application, you would query the database based on the period
-
         List<Map<String, Object>> trendData = new ArrayList<>();
-        LocalDate date = LocalDate.now().minusDays(30);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate startDate;
+        LocalDate endDate = LocalDate.now();
+        int increment;
 
-        for (int i = 0; i < 30; i++) {
+        // Xác định thời gian bắt đầu và cách tăng dựa trên period
+        if ("day".equals(period)) {
+            startDate = endDate.minusDays(30);
+            increment = 1;
+        } else if ("week".equals(period)) {
+            startDate = endDate.minusWeeks(12);
+            increment = 7;
+        } else if ("year".equals(period)) {
+            startDate = endDate.minusYears(5);
+            increment = 365;
+        } else { // month (default)
+            startDate = endDate.minusMonths(12);
+            increment = 30;
+        }
+
+        // Tạo dữ liệu xu hướng
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate current = startDate;
+
+        while (!current.isAfter(endDate)) {
             Map<String, Object> data = new HashMap<>();
-            date = date.plusDays(1);
-            data.put("date", date.format(formatter));
-            data.put("count", (int) (Math.random() * 10)); // Random data for demonstration
+            data.put("date", current.format(formatter));
+            data.put("count", (int) (Math.random() * 20)); // Random data
             trendData.add(data);
+
+            current = current.plusDays(increment);
         }
 
         return trendData;
-    }
-
-    private String getMonthName(int month) {
-        return new String[]{"January", "February", "March", "April", "May", "June",
-                "July", "August", "September", "October", "November", "December"}[month-1];
     }
 }

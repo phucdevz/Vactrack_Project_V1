@@ -54,8 +54,8 @@ public class AuthService {
             User savedUser = userRepository.save(user);
             logger.info("User registered successfully: {}", savedUser.getEmail());
 
-            // Tạo JWT token
-            String token = jwtTokenProvider.generateToken(savedUser.getEmail());
+            // Tạo JWT token sử dụng toàn bộ thông tin user
+            String token = jwtTokenProvider.generateTokenFromUser(savedUser);
 
             return new AuthResponse(token, savedUser);
         } catch (Exception e) {
@@ -87,8 +87,8 @@ public class AuthService {
 
             logger.info("User logged in successfully: {}", user.getEmail());
 
-            // Tạo JWT token
-            String token = jwtTokenProvider.generateToken(user.getEmail());
+            // Tạo JWT token sử dụng toàn bộ thông tin user
+            String token = jwtTokenProvider.generateTokenFromUser(user);
 
             return new AuthResponse(token, user);
         } catch (Exception e) {
