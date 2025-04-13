@@ -1,6 +1,6 @@
-
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,25 +26,46 @@ const Contact = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    setTimeout(() => {
+    try {
+      const contactData = {
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject || `Yêu cầu liên hệ từ ${formData.name}`,
+        message: `Điện thoại: ${formData.phone}\n\n${formData.message}`,
+        type: "contact",
+      };
+
+      const response = await axios.post('/api/contact', contactData);
+      
+      if (response.data.success) {
+        toast({
+          title: "Gửi thành công!",
+          description: "Chúng tôi đã nhận được tin nhắn của bạn và sẽ phản hồi trong thời gian sớm nhất.",
+        });
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          subject: "",
+          message: "",
+        });
+      } else {
+        throw new Error("Lỗi khi gửi form liên hệ");
+      }
+    } catch (error) {
+      console.error("Lỗi khi gửi form liên hệ:", error);
       toast({
-        title: "Gửi thành công!",
-        description: "Chúng tôi đã nhận được tin nhắn của bạn và sẽ phản hồi trong thời gian sớm nhất.",
+        variant: "destructive",
+        title: "Có lỗi xảy ra",
+        description: "Không thể gửi yêu cầu liên hệ. Vui lòng thử lại sau.",
       });
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        subject: "",
-        message: "",
-      });
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   const contactInfo = [

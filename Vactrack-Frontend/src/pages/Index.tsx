@@ -1,7 +1,8 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -17,8 +18,18 @@ import {
   CalendarCheck, 
   ShieldCheck, 
   Bell, 
-  Award 
+  Award,
+  RefreshCw
 } from "lucide-react";
+
+interface Testimonial {
+  id: string;
+  name: string;
+  role?: string;
+  content: string;
+  rating: number;
+  avatar?: string;
+}
 
 const Index = () => {
   // Mock statistics data
@@ -28,6 +39,94 @@ const Index = () => {
     { label: "Cơ sở trên toàn quốc", value: "15+" },
     { label: "Năm kinh nghiệm", value: "10+" },
   ];
+
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [isLoadingTestimonials, setIsLoadingTestimonials] = useState(true);
+
+  // Lấy feedback từ API
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        setIsLoadingTestimonials(true);
+        
+        // Thay đổi endpoint để sửa lỗi 403 Forbidden
+        // Sử dụng API endpoint không cần xác thực
+        const response = await axios.get("http://localhost:8080/api/feedback/public", {
+          params: {
+            page: 1,
+            limit: 10,
+            sortBy: "createdAt",
+            order: "desc"
+          },
+          // Xóa header Authorization nếu có
+          headers: {}
+        });
+
+        console.log("Public Feedback API response:", response.data);
+
+        if (response.data && Array.isArray(response.data.data)) {
+          // Chuyển đổi feedback thành định dạng testimonial
+          const testimonialData = response.data.data
+            .filter((item: any) => item.rating >= 4 && item.published === true) // Chỉ lấy đánh giá tốt (4-5 sao) và đã được công khai
+            .slice(0, 3) // Lấy tối đa 3 đánh giá
+            .map((item: any) => ({
+              id: item.id || Math.random().toString(),
+              name: item.name || "Khách hàng",
+              role: item.subject && item.subject.includes("Đánh giá nhanh") ? "Khách hàng" : undefined,
+              content: item.message,
+              rating: item.rating,
+            }));
+          
+          console.log("Processed testimonials:", testimonialData);
+          
+          if (testimonialData.length > 0) {
+            setTestimonials(testimonialData);
+          } else {
+            // Sử dụng dữ liệu mẫu nếu không có testimonial nào từ API
+            setTestimonials(getFallbackTestimonials());
+          }
+        } else {
+          console.warn("API response does not contain expected data array:", response.data);
+          setTestimonials(getFallbackTestimonials());
+        }
+      } catch (error) {
+        console.error("Error fetching testimonials:", error);
+        // Fallback to default testimonials
+        setTestimonials(getFallbackTestimonials());
+      } finally {
+        setIsLoadingTestimonials(false);
+      }
+    };
+
+    fetchTestimonials();
+  }, []);
+
+  // Dữ liệu mẫu khi không có phản hồi từ API
+  const getFallbackTestimonials = (): Testimonial[] => {
+    return [
+      {
+        id: "1",
+        name: "Nguyễn Thị Mai",
+        role: "Mẹ bé Na",
+        content: "VacTrack giúp tôi dễ dàng theo dõi lịch tiêm chủng của con. Đặc biệt ấn tượng với tính năng nhắc lịch tự động và hồ sơ điện tử, giúp tôi không bỏ sót mũi tiêm nào cho bé.",
+        rating: 5,
+      },
+      {
+        id: "2",
+        name: "Trần Văn Hoàng",
+        role: "Bố bé Minh",
+        content: "Đội ngũ y bác sĩ rất chuyên nghiệp và tận tâm. Tôi đánh giá cao việc hệ thống lưu trữ đầy đủ thông tin tiêm chủng và gửi nhắc nhở đều đặn. Giao diện ứng dụng cũng rất dễ sử dụng.",
+        rating: 5,
+      },
+      {
+        id: "3",
+        name: "Lê Thị Hương",
+        role: "Mẹ hai bé",
+        content: "Với hai con nhỏ, việc theo dõi lịch tiêm chủng thực sự là thách thức lớn. VacTrack đã giúp tôi quản lý thông tin tiêm chủng của cả hai bé một cách hiệu quả và không bỏ sót mũi tiêm nào.",
+        rating: 4,
+      }
+    ];
+  };
 
   return (
     <div className="min-h-screen">
@@ -247,29 +346,26 @@ const Index = () => {
             </motion.p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <TestimonialCard
-              name="Nguyễn Thị Mai"
-              role="Mẹ bé Na"
-              content="VacTrack giúp tôi dễ dàng theo dõi lịch tiêm chủng của con. Đặc biệt ấn tượng với tính năng nhắc lịch tự động và hồ sơ điện tử, giúp tôi không bỏ sót mũi tiêm nào cho bé."
-              rating={5}
-              delay={0.1}
-            />
-            <TestimonialCard
-              name="Trần Văn Hoàng"
-              role="Bố bé Minh"
-              content="Đội ngũ y bác sĩ rất chuyên nghiệp và tận tâm. Tôi đánh giá cao việc hệ thống lưu trữ đầy đủ thông tin tiêm chủng và gửi nhắc nhở đều đặn. Giao diện ứng dụng cũng rất dễ sử dụng."
-              rating={5}
-              delay={0.2}
-            />
-            <TestimonialCard
-              name="Lê Thị Hương"
-              role="Mẹ hai bé"
-              content="Với hai con nhỏ, việc theo dõi lịch tiêm chủng thực sự là thách thức lớn. VacTrack đã giúp tôi quản lý thông tin tiêm chủng của cả hai bé một cách hiệu quả và không bỏ sót mũi tiêm nào."
-              rating={4}
-              delay={0.3}
-            />
-          </div>
+          {isLoadingTestimonials ? (
+            <div className="flex items-center justify-center py-12">
+              <RefreshCw className="h-8 w-8 animate-spin text-brand-500" />
+              <p className="ml-4 text-gray-600">Đang tải đánh giá...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {testimonials.map((testimonial, index) => (
+                <TestimonialCard
+                  key={testimonial.id}
+                  name={testimonial.name}
+                  role={testimonial.role}
+                  content={testimonial.content}
+                  rating={testimonial.rating}
+                  avatar={testimonial.avatar}
+                  delay={0.1 * index}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

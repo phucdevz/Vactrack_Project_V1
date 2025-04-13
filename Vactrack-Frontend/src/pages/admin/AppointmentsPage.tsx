@@ -9,7 +9,10 @@ import {
   FilePlus,
   RefreshCw,
   Search,
-  UserPlus
+  UserPlus,
+  X,
+  Check,
+  AlertCircle
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -25,11 +28,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import AdminHeader from "@/components/AdminHeader";
 import AdminSidebar from "@/components/AdminSidebar";
 
-// API URL from context
-const API_URL = "http://localhost:8080/api";
+// API URL from environment or default
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
 
 interface Appointment {
   id: string;
@@ -43,7 +54,7 @@ interface Appointment {
 }
 
 const AppointmentsPage = () => {
-  const { isLoggedIn, isAdmin } = useAuth();
+  const { isLoggedIn, isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -52,6 +63,10 @@ const AppointmentsPage = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isStatusUpdating, setIsStatusUpdating] = useState(false);
 
   // Check if user is logged in and has admin role
   useEffect(() => {
@@ -85,62 +100,18 @@ const AppointmentsPage = () => {
           size: 10,
           status: statusFilter !== "all" ? statusFilter : undefined,
           search: searchQuery || undefined
+        },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         }
       });
       
       if (response.data) {
-        setAppointments(response.data.content);
-        setTotalPages(response.data.totalPages);
+        console.log("Appointments data:", response.data);
+        setAppointments(response.data.content || []);
+        setTotalPages(response.data.totalPages || 1);
       } else {
-        // Fallback data
-        setAppointments([
-          {
-            id: "AP-12345",
-            patientName: "Nguyễn Văn A",
-            date: "20/06/2023",
-            time: "09:30",
-            service: "Gói tiêm chủng cơ bản",
-            status: "completed",
-            phone: "0912345678"
-          },
-          {
-            id: "AP-12346",
-            patientName: "Trần Thị B",
-            date: "21/06/2023",
-            time: "10:15",
-            service: "Gói tiêm chủng cao cấp",
-            status: "pending",
-            phone: "0987654321"
-          },
-          {
-            id: "AP-12347",
-            patientName: "Lê Văn C",
-            date: "22/06/2023",
-            time: "14:00",
-            service: "Tiêm vắc-xin Covid-19",
-            status: "canceled",
-            phone: "0923456789"
-          },
-          {
-            id: "AP-12348",
-            patientName: "Phạm Thị D",
-            date: "23/06/2023",
-            time: "15:30",
-            service: "Gói tiêm chủng trọn gói",
-            status: "pending",
-            phone: "0934567890"
-          },
-          {
-            id: "AP-12349",
-            patientName: "Hoàng Văn E",
-            date: "24/06/2023",
-            time: "11:00",
-            service: "Tiêm vắc-xin cúm mùa",
-            status: "completed",
-            phone: "0945678901"
-          }
-        ]);
-        setTotalPages(5);
+        throw new Error("Invalid response format");
       }
       
       setIsLoading(false);
@@ -189,15 +160,95 @@ const AppointmentsPage = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setCurrentPage(1); // Reset to first page on new search
     fetchAppointments();
   };
 
-  const handleExportData = () => {
-    toast({
-      title: "Xuất dữ liệu",
-      description: "Dữ liệu lịch hẹn đang được xuất ra file Excel.",
-    });
-    // In a real app, this would trigger a data export
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+      const response = await axios.get(`${API_URL}/admin/appointments/export`, {
+        responseType: 'blob',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        }
+      });
+      
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `appointments-export-${new Date().toISOString().slice(0, 10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      toast({
+        title: "Xuất dữ liệu thành công",
+        description: "Dữ liệu lịch hẹn đã được xuất ra file Excel.",
+      });
+    } catch (error) {
+      console.error("Error exporting appointments:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi xuất dữ liệu",
+        description: "Không thể xuất dữ liệu. Vui lòng thử lại sau.",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleUpdateStatus = async (appointmentId: string, newStatus: 'completed' | 'pending' | 'canceled') => {
+    setIsStatusUpdating(true);
+    try {
+      const response = await axios.patch(
+        `${API_URL}/admin/appointments/${appointmentId}/status`,
+        { status: newStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          }
+        }
+      );
+      
+      if (response.data && response.data.success) {
+        // Update appointment in the local state
+        setAppointments(appointments.map(app => 
+          app.id === appointmentId ? { ...app, status: newStatus } : app
+        ));
+        
+        if (selectedAppointment && selectedAppointment.id === appointmentId) {
+          setSelectedAppointment({ ...selectedAppointment, status: newStatus });
+        }
+        
+        toast({
+          title: "Cập nhật thành công",
+          description: `Trạng thái lịch hẹn đã được cập nhật thành ${getStatusText(newStatus)}.`,
+        });
+      } else {
+        throw new Error("Failed to update appointment status");
+      }
+    } catch (error) {
+      console.error("Error updating appointment status:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi cập nhật",
+        description: "Không thể cập nhật trạng thái lịch hẹn. Vui lòng thử lại sau.",
+      });
+    } finally {
+      setIsStatusUpdating(false);
+    }
+  };
+
+  const handleCreateAppointment = () => {
+    // Navigate to appointment creation page
+    navigate("/admin-vactrack/appointments/create");
+  };
+
+  const showAppointmentDetails = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setIsDetailDialogOpen(true);
   };
 
   const getStatusColor = (status: string) => {
@@ -267,11 +318,19 @@ const AppointmentsPage = () => {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={handleExportData}>
-                <Download className="mr-2 h-4 w-4" />
+              <Button 
+                onClick={handleExportData} 
+                disabled={isExporting}
+                variant="outline"
+              >
+                {isExporting ? (
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="mr-2 h-4 w-4" />
+                )}
                 Xuất Excel
               </Button>
-              <Button variant="default">
+              <Button variant="default" onClick={handleCreateAppointment}>
                 <CalendarDays className="mr-2 h-4 w-4" />
                 Tạo lịch hẹn
               </Button>
@@ -341,26 +400,40 @@ const AppointmentsPage = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredAppointments.map((appointment) => (
-                      <TableRow key={appointment.id}>
-                        <TableCell className="font-medium">{appointment.id}</TableCell>
-                        <TableCell>{appointment.patientName}</TableCell>
-                        <TableCell>{appointment.phone || "Không có"}</TableCell>
-                        <TableCell>{appointment.date}</TableCell>
-                        <TableCell>{appointment.time}</TableCell>
-                        <TableCell>{appointment.service}</TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(appointment.status)}`}>
-                            {getStatusText(appointment.status)}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm">
-                            Chi tiết
-                          </Button>
+                    {filteredAppointments.length > 0 ? (
+                      filteredAppointments.map((appointment) => (
+                        <TableRow key={appointment.id}>
+                          <TableCell className="font-medium">{appointment.id}</TableCell>
+                          <TableCell>{appointment.patientName}</TableCell>
+                          <TableCell>{appointment.phone || "Không có"}</TableCell>
+                          <TableCell>{appointment.date}</TableCell>
+                          <TableCell>{appointment.time}</TableCell>
+                          <TableCell>{appointment.service}</TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(appointment.status)}`}>
+                              {getStatusText(appointment.status)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => showAppointmentDetails(appointment)}
+                            >
+                              Chi tiết
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-4 text-gray-500">
+                          {searchQuery || statusFilter !== "all" ? 
+                            "Không có lịch hẹn nào phù hợp với tìm kiếm" : 
+                            "Chưa có lịch hẹn nào trong hệ thống"}
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </div>
@@ -390,6 +463,103 @@ const AppointmentsPage = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Appointment Details Dialog */}
+          <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Chi tiết lịch hẹn</DialogTitle>
+                <DialogDescription>
+                  Thông tin chi tiết và các thao tác cho lịch hẹn
+                </DialogDescription>
+              </DialogHeader>
+              
+              {selectedAppointment && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Mã lịch hẹn</p>
+                      <p>{selectedAppointment.id}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Trạng thái</p>
+                      <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(selectedAppointment.status)}`}>
+                        {getStatusText(selectedAppointment.status)}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Tên bệnh nhân</p>
+                      <p>{selectedAppointment.patientName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Số điện thoại</p>
+                      <p>{selectedAppointment.phone || "Không có"}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Ngày hẹn</p>
+                      <p>{selectedAppointment.date}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Giờ hẹn</p>
+                      <p>{selectedAppointment.time}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-sm font-medium text-gray-500">Dịch vụ</p>
+                      <p>{selectedAppointment.service}</p>
+                    </div>
+                    {selectedAppointment.notes && (
+                      <div className="col-span-2">
+                        <p className="text-sm font-medium text-gray-500">Ghi chú</p>
+                        <p>{selectedAppointment.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="pt-4 border-t">
+                    <p className="text-sm font-medium mb-2">Cập nhật trạng thái</p>
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="flex-1"
+                        disabled={selectedAppointment.status === "completed" || isStatusUpdating}
+                        onClick={() => handleUpdateStatus(selectedAppointment.id, "completed")}
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Hoàn thành
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="flex-1"
+                        disabled={selectedAppointment.status === "pending" || isStatusUpdating}
+                        onClick={() => handleUpdateStatus(selectedAppointment.id, "pending")}
+                      >
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        Đang chờ
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className="flex-1"
+                        disabled={selectedAppointment.status === "canceled" || isStatusUpdating}
+                        onClick={() => handleUpdateStatus(selectedAppointment.id, "canceled")}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Hủy bỏ
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
+                  Đóng
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>

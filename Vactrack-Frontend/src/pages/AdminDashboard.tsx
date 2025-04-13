@@ -13,7 +13,10 @@ import {
   FileText, 
   Download,
   Search,
-  RefreshCw
+  RefreshCw,
+  MessageCircle,
+  PhoneCall,
+  ArrowRight
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -33,9 +36,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AdminHeader from "@/components/AdminHeader";
 import AdminSidebar from "@/components/AdminSidebar";
+import { AdminFeedbackList } from "@/components/AdminFeedbackList";
+import { AdminContactList } from "@/components/AdminContactList";
 
-// API URL from context
-const API_URL = "http://localhost:8080/api";
+// API URL from environment or default
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
 
 interface VaccinationStats {
   totalAppointments: number;
@@ -53,6 +58,16 @@ interface RecentAppointment {
   status: 'completed' | 'pending' | 'canceled';
 }
 
+interface FeedbackItem {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  rating: number;
+  createdAt: string;
+}
+
 const AdminDashboard = () => {
   const { isLoggedIn, user, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -67,15 +82,16 @@ const AdminDashboard = () => {
   const [recentAppointments, setRecentAppointments] = useState<RecentAppointment[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [timeFilter, setTimeFilter] = useState("all");
+  const [highlightFeedback, setHighlightFeedback] = useState<FeedbackItem[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
+  const [activeTab, setActiveTab] = useState("appointments");
 
-  // Check if user is logged in and has admin role
   useEffect(() => {
     if (!isLoggedIn) {
       navigate("/login", { state: { from: { pathname: "/admin-vactrack" } } });
       return;
     }
 
-    // Check if user has admin role
     if (!isAdmin) {
       toast({
         variant: "destructive",
@@ -86,71 +102,33 @@ const AdminDashboard = () => {
       return;
     }
 
-    // Fetch dashboard data
     fetchDashboardData();
-  }, [isLoggedIn, isAdmin, navigate]);
+  }, [isLoggedIn, isAdmin, navigate, timeFilter]);
 
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      // Thực hiện gọi API để lấy dữ liệu từ backend
-      const response = await axios.get(`${API_URL}/admin/dashboard`);
+      const response = await axios.get(`${API_URL}/admin/dashboard`, {
+        params: {
+          timeRange: timeFilter
+        },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        }
+      });
       
       if (response.data) {
-        // Nếu có dữ liệu thực từ API, sử dụng nó
-        setStats(response.data.stats);
-        setRecentAppointments(response.data.recentAppointments);
-      } else {
-        // Fallback data khi không có dữ liệu từ API
-        setStats({
+        console.log("Dashboard data:", response.data);
+        setStats(response.data.stats || {
           totalAppointments: 124,
           completedAppointments: 85,
           canceledAppointments: 12,
           pendingAppointments: 27
         });
-
-        setRecentAppointments([
-          {
-            id: "AP-12345",
-            patientName: "Nguyễn Văn A",
-            date: "20/06/2023",
-            time: "09:30",
-            service: "Gói tiêm chủng cơ bản",
-            status: "completed"
-          },
-          {
-            id: "AP-12346",
-            patientName: "Trần Thị B",
-            date: "21/06/2023",
-            time: "10:15",
-            service: "Gói tiêm chủng cao cấp",
-            status: "pending"
-          },
-          {
-            id: "AP-12347",
-            patientName: "Lê Văn C",
-            date: "22/06/2023",
-            time: "14:00",
-            service: "Tiêm vắc-xin Covid-19",
-            status: "canceled"
-          },
-          {
-            id: "AP-12348",
-            patientName: "Phạm Thị D",
-            date: "23/06/2023",
-            time: "15:30",
-            service: "Gói tiêm chủng trọn gói",
-            status: "pending"
-          },
-          {
-            id: "AP-12349",
-            patientName: "Hoàng Văn E",
-            date: "24/06/2023",
-            time: "11:00",
-            service: "Tiêm vắc-xin cúm mùa",
-            status: "completed"
-          }
-        ]);
+        
+        setRecentAppointments(response.data.recentAppointments || []);
+      } else {
+        throw new Error("Invalid response format");
       }
 
       setIsLoading(false);
@@ -162,7 +140,7 @@ const AdminDashboard = () => {
         description: "Không thể tải dữ liệu bảng điều khiển. Vui lòng thử lại sau.",
       });
       
-      // Fallback data khi có lỗi
+      // Fallback data
       setStats({
         totalAppointments: 124,
         completedAppointments: 85,
@@ -170,7 +148,6 @@ const AdminDashboard = () => {
         pendingAppointments: 27
       });
 
-      // Mock data for recent appointments
       setRecentAppointments([
         {
           id: "AP-12345",
@@ -218,21 +195,60 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleExportData = () => {
-    toast({
-      title: "Xuất dữ liệu",
-      description: "Dữ liệu đang được xuất ra file Excel.",
-    });
-    // In a real app, this would trigger a data export
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+      const endpoint = activeTab === "appointments" 
+        ? `${API_URL}/admin/appointments/export` 
+        : `${API_URL}/admin/statistics/export`;
+      
+      const response = await axios.get(endpoint, {
+        params: {
+          timeRange: timeFilter
+        },
+        responseType: 'blob',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        }
+      });
+      
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${activeTab}-export-${new Date().toISOString().slice(0, 10)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      toast({
+        title: "Xuất dữ liệu thành công",
+        description: "Dữ liệu đã được xuất ra file Excel.",
+      });
+    } catch (error) {
+      console.error("Error exporting data:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi xuất dữ liệu",
+        description: "Không thể xuất dữ liệu. Vui lòng thử lại sau.",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleHighlightFeedback = (feedbackItems: FeedbackItem[]) => {
+    const bestFeedback = feedbackItems
+      .filter(item => item.rating >= 4)
+      .sort((a, b) => b.rating - a.rating || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5);
+    
+    setHighlightFeedback(bestFeedback);
   };
 
   const filteredAppointments = recentAppointments.filter(appointment => {
     const matchesSearch = appointment.patientName.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           appointment.id.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    if (timeFilter === "all") return matchesSearch;
-    if (timeFilter === "today") return appointment.date === "24/06/2023" && matchesSearch;
-    if (timeFilter === "week") return matchesSearch; // Simplified for demo
     
     return matchesSearch;
   });
@@ -263,6 +279,10 @@ const AdminDashboard = () => {
     }
   };
 
+  const navigateToAppointmentDetails = (appointmentId: string) => {
+    navigate(`/admin-vactrack/appointments?id=${appointmentId}`);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -291,7 +311,6 @@ const AdminDashboard = () => {
             <p className="text-gray-600">Xem tổng quan về hoạt động tiêm chủng</p>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card>
               <CardHeader className="pb-2">
@@ -362,9 +381,11 @@ const AdminDashboard = () => {
             </Card>
           </div>
 
-          <Tabs defaultValue="appointments" className="mb-6">
+          <Tabs defaultValue="appointments" value={activeTab} onValueChange={setActiveTab} className="mb-6">
             <TabsList>
               <TabsTrigger value="appointments">Lịch hẹn</TabsTrigger>
+              <TabsTrigger value="feedback">Phản hồi</TabsTrigger>
+              <TabsTrigger value="contacts">Liên hệ</TabsTrigger>
               <TabsTrigger value="reports">Báo cáo</TabsTrigger>
             </TabsList>
             
@@ -378,12 +399,25 @@ const AdminDashboard = () => {
                     </CardDescription>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={handleExportData}>
-                      <Download className="mr-2 h-4 w-4" />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleExportData}
+                      disabled={isExporting}
+                    >
+                      {isExporting ? (
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="mr-2 h-4 w-4" />
+                      )}
                       Xuất Excel
                     </Button>
-                    <Button size="sm" onClick={fetchDashboardData}>
-                      <RefreshCw className="mr-2 h-4 w-4" />
+                    <Button 
+                      size="sm" 
+                      onClick={fetchDashboardData}
+                      disabled={isLoading}
+                    >
+                      <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
                       Làm mới
                     </Button>
                   </div>
@@ -429,39 +463,65 @@ const AdminDashboard = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredAppointments.map((appointment) => (
-                          <TableRow key={appointment.id}>
-                            <TableCell className="font-medium">{appointment.id}</TableCell>
-                            <TableCell>{appointment.patientName}</TableCell>
-                            <TableCell>{appointment.date}</TableCell>
-                            <TableCell>{appointment.time}</TableCell>
-                            <TableCell>{appointment.service}</TableCell>
-                            <TableCell>
-                              <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(appointment.status)}`}>
-                                {getStatusText(appointment.status)}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <Button variant="ghost" size="sm">
-                                Chi tiết
-                              </Button>
+                        {filteredAppointments.length > 0 ? (
+                          filteredAppointments.map((appointment) => (
+                            <TableRow key={appointment.id}>
+                              <TableCell className="font-medium">{appointment.id}</TableCell>
+                              <TableCell>{appointment.patientName}</TableCell>
+                              <TableCell>{appointment.date}</TableCell>
+                              <TableCell>{appointment.time}</TableCell>
+                              <TableCell>{appointment.service}</TableCell>
+                              <TableCell>
+                                <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(appointment.status)}`}>
+                                  {getStatusText(appointment.status)}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => navigateToAppointmentDetails(appointment.id)}
+                                >
+                                  Chi tiết
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center py-4 text-gray-500">
+                              {searchQuery ? 
+                                "Không có lịch hẹn nào phù hợp với tìm kiếm" : 
+                                "Chưa có lịch hẹn nào trong hệ thống"}
                             </TableCell>
                           </TableRow>
-                        ))}
+                        )}
                       </TableBody>
                     </Table>
                   </div>
                 </CardContent>
                 <CardFooter className="flex justify-between">
                   <div className="text-sm text-gray-500">
-                    Hiển thị {filteredAppointments.length} trên {recentAppointments.length} lịch hẹn
+                    Hiển thị {filteredAppointments.length} lịch hẹn gần đây
                   </div>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm" disabled>Trước</Button>
-                    <Button variant="outline" size="sm" disabled>Sau</Button>
-                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => navigate("/admin-vactrack/appointments")}
+                  >
+                    Xem tất cả
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
                 </CardFooter>
               </Card>
+            </TabsContent>
+            
+            <TabsContent value="feedback" className="mt-6">
+              <AdminFeedbackList onSelectFeedback={handleHighlightFeedback} />
+            </TabsContent>
+            
+            <TabsContent value="contacts" className="mt-6">
+              <AdminContactList />
             </TabsContent>
             
             <TabsContent value="reports" className="mt-6">
@@ -479,6 +539,16 @@ const AdminDashboard = () => {
                       <p className="ml-4 text-gray-500">Biểu đồ đang được tải...</p>
                     </div>
                   </CardContent>
+                  <CardFooter className="justify-end">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => navigate("/admin-vactrack/reports")}
+                    >
+                      Xem chi tiết
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </CardFooter>
                 </Card>
 
                 <Card>
@@ -494,6 +564,16 @@ const AdminDashboard = () => {
                       <p className="ml-4 text-gray-500">Biểu đồ đang được tải...</p>
                     </div>
                   </CardContent>
+                  <CardFooter className="justify-end">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => navigate("/admin-vactrack/reports")}
+                    >
+                      Xem chi tiết
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </CardFooter>
                 </Card>
 
                 <Card className="md:col-span-2">
@@ -509,6 +589,16 @@ const AdminDashboard = () => {
                       <p className="ml-4 text-gray-500">Biểu đồ đang được tải...</p>
                     </div>
                   </CardContent>
+                  <CardFooter className="justify-end">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => navigate("/admin-vactrack/reports")}
+                    >
+                      Xem chi tiết báo cáo
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </CardFooter>
                 </Card>
               </div>
             </TabsContent>

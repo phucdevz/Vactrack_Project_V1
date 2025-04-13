@@ -10,6 +10,9 @@ import { DatePicker } from "@/components/DatePicker";
 import { TimePicker } from "@/components/TimePicker";
 import { Textarea } from "@/components/ui/textarea";
 import { BookingFormData, BookingSlot } from "@/models/booking";
+import { facilities } from "@/models/facility";
+import { FacilityPicker } from "@/components/FacilityPicker";
+import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
 import { addDays, format } from "date-fns";
 import axios from "axios";
 import { useToast } from "@/hooks/use-toast";
@@ -32,11 +35,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PaymentConfirmation } from "@/components/PaymentConfirmation";
 
-// API URL từ Auth Context
 const API_URL = "http://localhost:8080/api";
 
-// Schema validation cho form booking
 const bookingFormSchema = z.object({
   patientName: z.string().min(2, {
     message: "Tên bệnh nhân phải có ít nhất 2 ký tự",
@@ -50,6 +52,9 @@ const bookingFormSchema = z.object({
   packageType: z.string({
     required_error: "Vui lòng chọn gói tiêm chủng",
   }),
+  facilityId: z.string({
+    required_error: "Vui lòng chọn cơ sở tiêm chủng",
+  }),
   appointmentDate: z.string({
     required_error: "Vui lòng chọn ngày hẹn",
   }),
@@ -57,7 +62,19 @@ const bookingFormSchema = z.object({
     required_error: "Vui lòng chọn giờ hẹn",
   }),
   notes: z.string().optional(),
+  paymentMethod: z.string().optional(),
 });
+
+const packagePrices = {
+  "co-ban": 1500000,
+  "tieu-chuan": 2500000,
+  "cao-cap": 3500000,
+  "ca-the-hoa-12": 2000000,
+  "ca-the-hoa-35": 2200000,
+  "ca-the-hoa-6": 2400000,
+  "sang-loc-co-ban": 500000,
+  "sang-loc-nang-cao": 800000,
+};
 
 const Booking = () => {
   const { isLoggedIn, user } = useAuth();
@@ -67,38 +84,37 @@ const Booking = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [timeSlots, setTimeSlots] = useState<BookingSlot[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [facilityName, setFacilityName] = useState("");
+  const [bookingAmount, setBookingAmount] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState("direct");
 
-  // Điều hướng sang trang login nếu chưa đăng nhập
   useEffect(() => {
     if (!isLoggedIn) {
       navigate("/login", { state: { from: { pathname: "/booking" } } });
     }
   }, [isLoggedIn, navigate]);
 
-  // Initialize form with React Hook Form
   const form = useForm<z.infer<typeof bookingFormSchema>>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
-      patientName: "",
+      patientName: user?.name || "",
       patientDob: "",
       serviceType: "",
       packageType: "",
+      facilityId: "",
       appointmentDate: "",
       appointmentTime: "",
       notes: "",
     },
   });
 
-  // Giả lập danh sách các khung giờ trống
   useEffect(() => {
-    if (date) {
+    if (date && form.watch("facilityId")) {
       const formattedDate = format(date, "yyyy-MM-dd");
       form.setValue("appointmentDate", formattedDate);
       
-      // Trong thực tế, bạn sẽ gọi API để lấy các khung giờ trống
-      // Ví dụ: axios.get(`${API_URL}/bookings/available-slots?date=${formattedDate}`)
-      
-      // Hiện tại giả lập dữ liệu
+      // Mock time slots
       const mockTimeSlots: BookingSlot[] = [
         { id: "1", time: "08:00", available: true },
         { id: "2", time: "08:30", available: false },
@@ -115,10 +131,20 @@ const Booking = () => {
       ];
       
       setTimeSlots(mockTimeSlots);
+    } else {
+      setTimeSlots([]);
     }
   }, [date, form]);
 
-  // Xử lý gửi form
+  useEffect(() => {
+    const selectedPackage = form.watch("packageType");
+    if (selectedPackage) {
+      setBookingAmount(packagePrices[selectedPackage] || 0);
+    } else {
+      setBookingAmount(0);
+    }
+  }, [form.watch("packageType")]);
+
   const onSubmit = async (values: z.infer<typeof bookingFormSchema>) => {
     if (!isLoggedIn || !user) {
       toast({
@@ -130,55 +156,20 @@ const Booking = () => {
       return;
     }
 
-    setIsSubmitting(true);
-    
-    try {
-      // TODO: Kết nối với Spring Boot API
-      // Trong thực tế, chúng ta sẽ gửi dữ liệu đến backend ở đây
-      // const response = await axios.post(`${API_URL}/bookings`, {
-      //   userId: user.id,
-      //   ...values,
-      //   status: "pending"
-      // });
-      
-      // Giả lập việc gửi dữ liệu
-      console.log("Booking data:", {
-        userId: user.id,
-        ...values,
-        status: "pending"
-      });
-      
-      // Hiển thị thông báo thành công
-      toast({
-        title: "Đặt lịch thành công",
-        description: "Chúng tôi sẽ liên hệ với bạn để xác nhận lịch hẹn",
-      });
-      
-      // Reset form
-      form.reset();
-      setDate(undefined);
-      
-    } catch (error) {
-      console.error("Booking error:", error);
-      toast({
-        title: "Lỗi đặt lịch",
-        description: "Đã xảy ra lỗi khi đặt lịch. Vui lòng thử lại sau.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    setShowConfirmation(true);
   };
 
-  // Danh sách dịch vụ
+  const handleConfirmBooking = () => {
+    // This will be handled by the PaymentConfirmation component now
+  };
+
+  // Services and packages data
   const services = [
-    { id: "dat-lich-tiem-chung", name: "Đặt lịch tiêm chủng" },
     { id: "goi-tiem-chung-tron-goi", name: "Gói tiêm chủng trọn gói" },
     { id: "tiem-chung-ca-the-hoa", name: "Tiêm chủng cá thể hóa" },
     { id: "kham-sang-loc-truoc-tiem", name: "Khám sàng lọc trước tiêm" },
   ];
 
-  // Danh sách các gói
   const packages = [
     { id: "co-ban", name: "Cơ bản", serviceId: "goi-tiem-chung-tron-goi" },
     { id: "tieu-chuan", name: "Tiêu chuẩn", serviceId: "goi-tiem-chung-tron-goi" },
@@ -190,19 +181,35 @@ const Booking = () => {
     { id: "sang-loc-nang-cao", name: "Khám sàng lọc nâng cao", serviceId: "kham-sang-loc-truoc-tiem" },
   ];
 
-  // Lọc gói dựa trên dịch vụ đã chọn
   const filteredPackages = packages.filter(
     pkg => form.watch("serviceType") === pkg.serviceId
   );
 
-  // Hàm vô hiệu hóa các ngày trong quá khứ hoặc ngày nghỉ
   const disabledDates = (date: Date) => {
-    // Không cho phép chọn ngày trong quá khứ
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // Không cho phép chọn ngày chủ nhật
     return date < today || date.getDay() === 0;
+  };
+
+  const handleFacilityChange = (facilityId: string, name: string) => {
+    form.setValue("facilityId", facilityId);
+    setFacilityName(name);
+  };
+
+  // For the payment confirmation dialog
+  const selectedService = services.find(s => s.id === form.watch("serviceType"));
+  const selectedPackage = packages.find(p => p.id === form.watch("packageType"));
+
+  const confirmationData = {
+    bookingId: "BK" + Math.floor(Math.random() * 10000),
+    amount: bookingAmount,
+    serviceType: selectedService?.name,
+    packageType: selectedPackage?.name,
+    facilityName: facilityName,
+    appointmentDate: form.watch("appointmentDate"),
+    appointmentTime: form.watch("appointmentTime"),
+    paymentMethod: paymentMethod
   };
 
   return (
@@ -222,7 +229,6 @@ const Booking = () => {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Thông tin bệnh nhân */}
                   <div className="col-span-2">
                     <h2 className="text-xl font-semibold mb-4">Thông tin bệnh nhân</h2>
                   </div>
@@ -265,7 +271,6 @@ const Booking = () => {
                     )}
                   />
                   
-                  {/* Thông tin dịch vụ */}
                   <div className="col-span-2 mt-4">
                     <h2 className="text-xl font-semibold mb-4">Thông tin dịch vụ</h2>
                   </div>
@@ -277,7 +282,10 @@ const Booking = () => {
                       <FormItem>
                         <FormLabel>Loại dịch vụ</FormLabel>
                         <Select 
-                          onValueChange={field.onChange} 
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            form.setValue("packageType", ""); // Reset packageType when service changes
+                          }} 
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -330,7 +338,26 @@ const Booking = () => {
                     )}
                   />
                   
-                  {/* Thông tin lịch hẹn */}
+                  <div className="col-span-2">
+                    <FormField
+                      control={form.control}
+                      name="facilityId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Cơ sở tiêm chủng</FormLabel>
+                          <FormControl>
+                            <FacilityPicker
+                              value={field.value}
+                              onChange={handleFacilityChange}
+                              facilities={facilities}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
                   <div className="col-span-2 mt-4">
                     <h2 className="text-xl font-semibold mb-4">Thông tin lịch hẹn</h2>
                   </div>
@@ -370,11 +397,17 @@ const Booking = () => {
                             value={field.value} 
                             onChange={field.onChange}
                             timeSlots={timeSlots}
+                            disabled={!date || !form.watch("facilityId")}
                           />
                         </FormControl>
                         <FormMessage />
                         <FormDescription>
-                          Vui lòng chọn ngày trước để xem các khung giờ trống
+                          {!date 
+                            ? "Vui lòng chọn ngày trước để xem các khung giờ trống"
+                            : !form.watch("facilityId") 
+                              ? "Vui lòng chọn cơ sở tiêm chủng trước"
+                              : "Chọn khung giờ phù hợp"
+                          }
                         </FormDescription>
                       </FormItem>
                     )}
@@ -399,6 +432,14 @@ const Booking = () => {
                       )}
                     />
                   </div>
+                  
+                  <div className="col-span-2 mt-4">
+                    <h2 className="text-xl font-semibold mb-4">Phương thức thanh toán</h2>
+                    <PaymentMethodSelector
+                      value={paymentMethod}
+                      onChange={setPaymentMethod}
+                    />
+                  </div>
                 </div>
                 
                 <div className="pt-4">
@@ -407,11 +448,17 @@ const Booking = () => {
                     className="w-full bg-brand-500 hover:bg-brand-600"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Đang xử lý..." : "Xác nhận đặt lịch"}
+                    {isSubmitting ? "Đang xử lý..." : "Tiếp tục đặt lịch"}
                   </Button>
                 </div>
               </form>
             </Form>
+
+            <PaymentConfirmation 
+              open={showConfirmation} 
+              onOpenChange={setShowConfirmation} 
+              bookingData={confirmationData}
+            />
           </div>
         </div>
       </div>
