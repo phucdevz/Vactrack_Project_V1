@@ -48,7 +48,6 @@ Vactrack V1 is the **first generation** of the Vactrack digital vaccination trac
   <img src="demo/v1_2.png" width="220"/>
   <img src="demo/v1_3.png" width="220"/>
   <br/>
-  <em>Add your own screenshots into <code>demo/</code> folder!</em>
 </p>
 
 ---
